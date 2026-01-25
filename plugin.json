@@ -1,0 +1,8 @@
+{
+  "id": "betterpets",
+  "name": "Better Pets",
+  "version": "1.0.0",
+  "author": "GilloDaby",
+  "description": "Cosmetic companion pets that follow players.",
+  "main": "com.gillodaby.betterpets.BetterPetsPlugin"
+}

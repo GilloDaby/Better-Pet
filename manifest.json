@@ -1,0 +1,26 @@
+{
+  "Group": "GilloDaby",
+  "Name": "Better Pets",
+  "Version": "1.0.0",
+  "Description": "Cosmetic companion pets that follow players.",
+  "Authors": [
+    { "Name": "GilloDaby" }
+  ],
+  "Website": "",
+  "ServerVersion": "*",
+  "Dependencies": {},
+  "OptionalDependencies": {},
+  "DisabledByDefault": false,
+  "Main": "com.gillodaby.betterpets.BetterPetsPlugin",
+  "IncludesAssetPack": true,
+  "permissions": {
+    "betterpets.use": {
+      "description": "Use /pet menu, spawn, and remove.",
+      "default": true
+    },
+    "betterpets.admin": {
+      "description": "Grant pets to players.",
+      "default": "op"
+    }
+  }
+}

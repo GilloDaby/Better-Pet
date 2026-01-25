@@ -1,0 +1,53 @@
+$C = "../Common.ui";
+
+Group {
+  Anchor: (Width: 210, Height: 170);
+  LayoutMode: Top;
+
+  Button #SpawnButton {
+    Anchor: (Full: 0);
+    Background: (Color: #161e2b);
+    Style: ButtonStyle(
+      Default: (Background: (Color: #161e2b)),
+      Hovered: (Background: (Color: #1e2938)),
+      Pressed: (Background: (Color: #131a25)),
+      Sounds: $C.@ButtonSounds
+    );
+    LayoutMode: Top;
+    Padding: (Horizontal: 10, Vertical: 12);
+
+    Group #Icon {
+      Anchor: (Width: 64, Height: 64);
+      Background: (TexturePath: "Common/UI/WorldMap/MapMarkers/Player.png");
+    }
+
+    Group {
+      Anchor: (Height: 6);
+    }
+
+    Label #PetName {
+      Text: "Pet";
+      Style: (
+        FontSize: 13,
+        TextColor: #d4dfe8,
+        RenderBold: true,
+        HorizontalAlignment: Center
+      );
+      Anchor: (Height: 18);
+    }
+
+    Group {
+      Anchor: (Height: 4);
+    }
+
+    Label #PetCommand {
+      Text: "/pet spawn pet";
+      Style: (
+        FontSize: 11,
+        TextColor: #7a90a8,
+        HorizontalAlignment: Center
+      );
+      Anchor: (Height: 16);
+    }
+  }
+}

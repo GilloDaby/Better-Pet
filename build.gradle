@@ -1,0 +1,47 @@
+plugins {
+    id 'java'
+}
+
+group = 'com.gillodaby'
+version = '1.0.0'
+
+tasks.named('jar') {
+    archiveBaseName.set('BetterPets')
+}
+
+tasks.named('jar') {
+    if (file('plugin.json').exists()) {
+        from('plugin.json') { into '' }
+    }
+    if (file('manifest.json').exists()) {
+        from('manifest.json') { into '' }
+    }
+    if (file('config.yaml').exists()) {
+        from('config.yaml') { into '' }
+    }
+    if (file('Server').exists()) {
+        from('Server') { into 'Server' }
+    }
+    if (file('Common').exists()) {
+        from('Common') { into 'Common' }
+    }
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(25)
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.release = 25
+}
+
+repositories {
+    mavenCentral()
+    maven { url 'https://maven.hytale-modding.info/releases' }
+}
+
+dependencies {
+    compileOnly files('../libs/HytaleServer.jar')
+}
