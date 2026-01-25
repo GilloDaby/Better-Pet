@@ -23,6 +23,7 @@ public final class BetterPetsCommand extends AbstractCommand {
     private final RequiredArg<PlayerRef> giveTargetArg;
     private final RequiredArg<String> givePetArg;
     private final RequiredArg<PlayerRef> giveAllTargetArg;
+    private final RequiredArg<String> nameArg;
 
     BetterPetsCommand(BetterPetsService service) {
         super("pet", "Pet menu and commands");
@@ -67,6 +68,16 @@ public final class BetterPetsCommand extends AbstractCommand {
         this.giveAllTargetArg = giveAll.withRequiredArg("player", "target player", ArgTypes.PLAYER_REF);
         giveAll.requirePermission("betterpets.admin");
         addSubCommand(giveAll);
+
+        AbstractCommand name = new AbstractCommand("name", "Set your pet nameplate") {
+            @Override
+            protected CompletableFuture<Void> execute(CommandContext ctx) {
+                return handleName(ctx);
+            }
+        };
+        this.nameArg = name.withRequiredArg("name", "pet name", ArgTypes.STRING);
+        name.requirePermission("betterpets.use");
+        addSubCommand(name);
     }
 
     @Override
@@ -182,6 +193,36 @@ public final class BetterPetsCommand extends AbstractCommand {
         }
         int added = service.giveAllPets(target);
         ctx.sendMessage(Message.raw("Pets granted: " + added));
+        return CompletableFuture.completedFuture(null);
+    }
+
+    private CompletableFuture<Void> handleName(CommandContext ctx) {
+        if (!ctx.isPlayer()) {
+            ctx.sendMessage(Message.raw("Only players can name pets."));
+            return CompletableFuture.completedFuture(null);
+        }
+        Player player = ctx.senderAs(Player.class);
+        if (player == null) {
+            ctx.sendMessage(Message.raw("Player not available."));
+            return CompletableFuture.completedFuture(null);
+        }
+        PlayerRef playerRef = player.getPlayerRef();
+        if (playerRef == null || playerRef.getUuid() == null) {
+            ctx.sendMessage(Message.raw("Player not available."));
+            return CompletableFuture.completedFuture(null);
+        }
+        World world = player.getWorld();
+        if (world == null) {
+            ctx.sendMessage(Message.raw("Player not available."));
+            return CompletableFuture.completedFuture(null);
+        }
+        String name = ctx.get(nameArg);
+        if (name == null) {
+            ctx.sendMessage(Message.raw("Usage: /pet name <text>"));
+            return CompletableFuture.completedFuture(null);
+        }
+        world.execute(() -> service.setPetName(playerRef, world, name));
+        ctx.sendMessage(Message.raw("Pet name updated."));
         return CompletableFuture.completedFuture(null);
     }
 }

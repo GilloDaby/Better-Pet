@@ -14,6 +14,8 @@ import com.hypixel.hytale.server.npc.entities.NPCEntity;
 import com.hypixel.hytale.server.core.entity.entities.Player;
 import com.hypixel.hytale.server.core.modules.entity.component.Invulnerable;
 import com.hypixel.hytale.server.core.modules.entity.component.Intangible;
+import com.hypixel.hytale.server.core.modules.entity.component.TransformComponent;
+import com.hypixel.hytale.server.core.entity.nameplate.Nameplate;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,15 +33,17 @@ final class BetterPetsService {
 
     private final BetterPetsConfig config;
     private final PetRepository repository;
+    private final PetNameRepository nameRepository;
     private final Set<String> allowedPets;
     private final Map<String, String> petModels;
     private final Map<String, String> petRoles;
     private final Map<UUID, PetState> activePets = new ConcurrentHashMap<>();
     private volatile ScheduledFuture<?> followTask;
 
-    BetterPetsService(BetterPetsConfig config, PetRepository repository) {
+    BetterPetsService(BetterPetsConfig config, PetRepository repository, PetNameRepository nameRepository) {
         this.config = config;
         this.repository = repository;
+        this.nameRepository = nameRepository;
         this.allowedPets = ConcurrentHashMap.newKeySet();
         this.allowedPets.addAll(config.pets());
         this.petModels = new ConcurrentHashMap<>(config.petModels());
@@ -94,6 +98,22 @@ final class BetterPetsService {
 
     List<String> getOwnedPets(UUID ownerUuid) {
         return repository.list(ownerUuid);
+    }
+
+    String getPetName(UUID ownerUuid) {
+        return nameRepository.getName(ownerUuid);
+    }
+
+    void setPetName(PlayerRef owner, World world, String name) {
+        if (owner == null || owner.getUuid() == null || world == null) {
+            return;
+        }
+        nameRepository.setName(owner.getUuid(), name);
+        PetState state = activePets.get(owner.getUuid());
+        if (state == null) {
+            return;
+        }
+        world.execute(() -> applyPetNameplate(world, state, nameRepository.getName(owner.getUuid())));
     }
 
     String getActivePetId(UUID ownerUuid) {
@@ -240,10 +260,18 @@ final class BetterPetsService {
 
         PetState state = new PetState(type, modelId, world.getName(), owner.getUuid(), pet.getUuid(), petRef, config.followDistance(), config.followStep());
         activePets.put(owner.getUuid(), state);
+        String petName = nameRepository.getName(owner.getUuid());
+        if (petName != null && !petName.isBlank()) {
+            applyPetNameplate(world, state, petName);
+        }
     }
 
     private void followPet(World world, PetState state) {
         if (world == null || state == null) {
+            return;
+        }
+        if (state.petRef == null || !state.petRef.isValid()) {
+            activePets.remove(state.ownerUuid);
             return;
         }
         Player player = resolvePlayer(world, state.ownerUuid);
@@ -253,7 +281,13 @@ final class BetterPetsService {
             return;
         }
         Store<EntityStore> store = world.getEntityStore().getStore();
-        NPCEntity pet = store.getComponent(state.petRef, NPCEntity.getComponentType());
+        NPCEntity pet;
+        try {
+            pet = store.getComponent(state.petRef, NPCEntity.getComponentType());
+        } catch (RuntimeException ex) {
+            activePets.remove(state.ownerUuid);
+            return;
+        }
         if (pet == null || pet.wasRemoved()) {
             activePets.remove(state.ownerUuid);
             return;
@@ -262,10 +296,47 @@ final class BetterPetsService {
         if (playerRef == null || !playerRef.isValid()) {
             return;
         }
-        if (pet.getRole() == null || pet.getRole().getMarkedEntitySupport() == null) {
+        if (pet.getRole() != null && pet.getRole().getMarkedEntitySupport() != null) {
+            pet.getRole().getMarkedEntitySupport().setMarkedEntity("LockedTarget", playerRef);
+        }
+        TransformComponent playerTc;
+        TransformComponent petTc;
+        try {
+            playerTc = store.getComponent(playerRef, TransformComponent.getComponentType());
+            petTc = store.getComponent(state.petRef, TransformComponent.getComponentType());
+        } catch (RuntimeException ex) {
             return;
         }
-        pet.getRole().getMarkedEntitySupport().setMarkedEntity("LockedTarget", playerRef);
+        if (playerTc == null || petTc == null) {
+            return;
+        }
+        Vector3d playerPos = playerTc.getPosition();
+        Vector3d petPos = petTc.getPosition();
+        double dx = playerPos.x - petPos.x;
+        double dy = playerPos.y - petPos.y;
+        double dz = playerPos.z - petPos.z;
+        double distSq = dx * dx + dy * dy + dz * dz;
+        double minDist = state.followDistance;
+        if (distSq <= minDist * minDist) {
+            return;
+        }
+        double dist = Math.sqrt(distSq);
+        if (dist <= 0.001) {
+            return;
+        }
+        double step = Math.min(state.followStep, dist - minDist);
+        if (step <= 0) {
+            return;
+        }
+        double nx = dx / dist;
+        double ny = dy / dist;
+        double nz = dz / dist;
+        Vector3d next = new Vector3d(
+            petPos.x + nx * step,
+            petPos.y + ny * step,
+            petPos.z + nz * step
+        );
+        petTc.setPosition(next);
     }
 
     private void despawnPet(World world, PetState state) {
@@ -276,6 +347,53 @@ final class BetterPetsService {
         try {
             store.removeEntity(state.petRef, RemoveReason.REMOVE);
         } catch (Throwable ignored) {
+        }
+    }
+
+    private void applyPetNameplate(World world, PetState state, String name) {
+        if (world == null || state == null || name == null || name.isBlank()) {
+            return;
+        }
+        if (state.petRef == null || !state.petRef.isValid()) {
+            return;
+        }
+        Store<EntityStore> store = world.getEntityStore().getStore();
+        try {
+            NPCEntity pet = store.getComponent(state.petRef, NPCEntity.getComponentType());
+            if (pet == null || pet.wasRemoved()) {
+                return;
+            }
+            Nameplate np = store.getComponent(state.petRef, Nameplate.getComponentType());
+            if (np == null) {
+                np = new Nameplate(name);
+                applyLabelSettings(np);
+                store.addComponent(state.petRef, Nameplate.getComponentType(), np);
+            } else {
+                callIfExists(np, "setText", String.class, name);
+                applyLabelSettings(np);
+            }
+        } catch (Throwable ignored) {
+        }
+    }
+
+    private void applyLabelSettings(Nameplate np) {
+        if (np == null) {
+            return;
+        }
+        callIfExists(np, "setVisible", boolean.class, true);
+        callIfExists(np, "setEnabled", boolean.class, true);
+        callIfExists(np, "setAlwaysVisible", boolean.class, true);
+        callIfExists(np, "setMaxDistance", float.class, 9999f);
+        callIfExists(np, "setMaxDistance", double.class, 9999.0);
+    }
+
+    private void callIfExists(Object target, String methodName, Class<?> argType, Object arg) {
+        if (target == null || methodName == null) {
+            return;
+        }
+        try {
+            target.getClass().getMethod(methodName, argType).invoke(target, arg);
+        } catch (Exception ignored) {
         }
     }
 

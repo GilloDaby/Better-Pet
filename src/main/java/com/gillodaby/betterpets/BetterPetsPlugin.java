@@ -20,7 +20,9 @@ public final class BetterPetsPlugin extends JavaPlugin {
         BetterPetsConfig config = BetterPetsConfig.load(getDataDirectory());
         PetRepository repository = new PetRepository(getDataDirectory());
         repository.load();
-        service = new BetterPetsService(config, repository);
+        PetNameRepository nameRepository = new PetNameRepository(getDataDirectory());
+        nameRepository.load();
+        service = new BetterPetsService(config, repository, nameRepository);
     }
 
     @Override
