@@ -994,3 +994,9 @@ follow-step: 0.15
 
 # Allow any model id (from Spawn Entity list)
 allow-any-model: true
+
+# Allowed worlds (empty = all worlds)
+allowed-worlds: []
+
+# Blocked worlds (only used when allowed-worlds is empty)
+blocked-worlds: []

@@ -18,6 +18,8 @@ final class BetterPetsConfig {
     private static final double DEFAULT_FOLLOW_DISTANCE = 2.5;
     private static final double DEFAULT_FOLLOW_STEP = 0.15;
     private static final boolean DEFAULT_ALLOW_ANY_MODEL = true;
+    private static final List<String> DEFAULT_ALLOWED_WORLDS = List.of();
+    private static final List<String> DEFAULT_BLOCKED_WORLDS = List.of();
     private static final List<String> DEFAULT_PETS = List.of("duck", "wolf", "cat", "dog", "corgi");
     private static final Map<String, String> DEFAULT_MODELS = Map.of(
         "duck", "Duck",
@@ -70,6 +72,12 @@ final class BetterPetsConfig {
 
                 # Allow any model id (from Spawn Entity list)
                 allow-any-model: true
+
+                # Allowed worlds (empty = all worlds)
+                allowed-worlds: []
+
+                # Blocked worlds (only used when allowed-worlds is empty)
+                blocked-worlds: []
         """;
     private static final String DEFAULT_CONTENT = loadDefaultContent();
 
@@ -78,15 +86,19 @@ final class BetterPetsConfig {
     private final double followDistance;
     private final double followStep;
     private final boolean allowAnyModel;
+    private final List<String> allowedWorlds;
+    private final List<String> blockedWorlds;
     private final Map<String, String> petModels;
     private final Map<String, String> petRoles;
 
-    private BetterPetsConfig(List<String> pets, long updateIntervalMs, double followDistance, double followStep, boolean allowAnyModel, Map<String, String> petModels, Map<String, String> petRoles) {
+    private BetterPetsConfig(List<String> pets, long updateIntervalMs, double followDistance, double followStep, boolean allowAnyModel, List<String> allowedWorlds, List<String> blockedWorlds, Map<String, String> petModels, Map<String, String> petRoles) {
         this.pets = pets;
         this.updateIntervalMs = updateIntervalMs;
         this.followDistance = followDistance;
         this.followStep = followStep;
         this.allowAnyModel = allowAnyModel;
+        this.allowedWorlds = allowedWorlds;
+        this.blockedWorlds = blockedWorlds;
         this.petModels = petModels;
         this.petRoles = petRoles;
     }
@@ -119,6 +131,8 @@ final class BetterPetsConfig {
         double distance = DEFAULT_FOLLOW_DISTANCE;
         double step = DEFAULT_FOLLOW_STEP;
         boolean allowAnyModel = DEFAULT_ALLOW_ANY_MODEL;
+        List<String> allowedWorlds = new ArrayList<>(DEFAULT_ALLOWED_WORLDS);
+        List<String> blockedWorlds = new ArrayList<>(DEFAULT_BLOCKED_WORLDS);
         Map<String, String> models = new HashMap<>(DEFAULT_MODELS);
         Map<String, String> roles = new HashMap<>(DEFAULT_ROLES);
         try {
@@ -126,6 +140,8 @@ final class BetterPetsConfig {
             boolean inPets = false;
             boolean inModels = false;
             boolean inRoles = false;
+            boolean inAllowedWorlds = false;
+            boolean inBlockedWorlds = false;
             for (String line : lines) {
                 if (line == null) {
                     continue;
@@ -138,6 +154,8 @@ final class BetterPetsConfig {
                     inPets = true;
                     inModels = false;
                     inRoles = false;
+                    inAllowedWorlds = false;
+                    inBlockedWorlds = false;
                     pets.clear();
                     continue;
                 }
@@ -145,6 +163,8 @@ final class BetterPetsConfig {
                     inModels = true;
                     inPets = false;
                     inRoles = false;
+                    inAllowedWorlds = false;
+                    inBlockedWorlds = false;
                     models.clear();
                     continue;
                 }
@@ -152,7 +172,27 @@ final class BetterPetsConfig {
                     inRoles = true;
                     inPets = false;
                     inModels = false;
+                    inAllowedWorlds = false;
+                    inBlockedWorlds = false;
                     roles.clear();
+                    continue;
+                }
+                if (trimmed.startsWith("allowed-worlds:")) {
+                    inAllowedWorlds = true;
+                    inBlockedWorlds = false;
+                    inPets = false;
+                    inModels = false;
+                    inRoles = false;
+                    allowedWorlds.clear();
+                    continue;
+                }
+                if (trimmed.startsWith("blocked-worlds:")) {
+                    inBlockedWorlds = true;
+                    inAllowedWorlds = false;
+                    inPets = false;
+                    inModels = false;
+                    inRoles = false;
+                    blockedWorlds.clear();
                     continue;
                 }
                 if (inPets) {
@@ -162,6 +202,28 @@ final class BetterPetsConfig {
                         String value = trimmed.substring(1).trim().toLowerCase(Locale.ROOT);
                         if (!value.isEmpty()) {
                             pets.add(value);
+                        }
+                        continue;
+                    }
+                }
+                if (inAllowedWorlds) {
+                    if (!trimmed.startsWith("-")) {
+                        inAllowedWorlds = false;
+                    } else {
+                        String value = trimmed.substring(1).trim().toLowerCase(Locale.ROOT);
+                        if (!value.isEmpty()) {
+                            allowedWorlds.add(value);
+                        }
+                        continue;
+                    }
+                }
+                if (inBlockedWorlds) {
+                    if (!trimmed.startsWith("-")) {
+                        inBlockedWorlds = false;
+                    } else {
+                        String value = trimmed.substring(1).trim().toLowerCase(Locale.ROOT);
+                        if (!value.isEmpty()) {
+                            blockedWorlds.add(value);
                         }
                         continue;
                     }
@@ -231,6 +293,12 @@ final class BetterPetsConfig {
         if (pets.isEmpty()) {
             pets = new ArrayList<>(DEFAULT_PETS);
         }
+        if (allowedWorlds == null) {
+            allowedWorlds = new ArrayList<>(DEFAULT_ALLOWED_WORLDS);
+        }
+        if (blockedWorlds == null) {
+            blockedWorlds = new ArrayList<>(DEFAULT_BLOCKED_WORLDS);
+        }
         if (models.isEmpty()) {
             models = new HashMap<>(DEFAULT_MODELS);
         }
@@ -238,7 +306,7 @@ final class BetterPetsConfig {
             roles = new HashMap<>(DEFAULT_ROLES);
         }
         long clamped = Math.max(MIN_INTERVAL_MS, interval);
-        return new BetterPetsConfig(List.copyOf(pets), clamped, distance, step, allowAnyModel, Map.copyOf(models), Map.copyOf(roles));
+        return new BetterPetsConfig(List.copyOf(pets), clamped, distance, step, allowAnyModel, List.copyOf(allowedWorlds), List.copyOf(blockedWorlds), Map.copyOf(models), Map.copyOf(roles));
     }
 
     List<String> pets() {
@@ -259,6 +327,28 @@ final class BetterPetsConfig {
 
     boolean allowAnyModel() {
         return allowAnyModel;
+    }
+
+    List<String> allowedWorlds() {
+        return allowedWorlds;
+    }
+
+    List<String> blockedWorlds() {
+        return blockedWorlds;
+    }
+
+    boolean isWorldAllowed(String worldName) {
+        if (worldName == null || worldName.isBlank()) {
+            return true;
+        }
+        String key = worldName.toLowerCase(Locale.ROOT);
+        if (allowedWorlds != null && !allowedWorlds.isEmpty()) {
+            return allowedWorlds.contains(key);
+        }
+        if (blockedWorlds != null && !blockedWorlds.isEmpty()) {
+            return !blockedWorlds.contains(key);
+        }
+        return true;
     }
 
     Map<String, String> petModels() {

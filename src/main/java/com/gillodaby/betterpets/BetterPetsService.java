@@ -6,6 +6,7 @@ import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.math.vector.Vector3d;
 import com.hypixel.hytale.math.vector.Vector3f;
 import com.hypixel.hytale.server.core.event.events.player.PlayerDisconnectEvent;
+import com.hypixel.hytale.server.core.event.events.player.PlayerReadyEvent;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.Universe;
 import com.hypixel.hytale.server.core.universe.world.World;
@@ -35,16 +36,18 @@ final class BetterPetsService {
     private final BetterPetsConfig config;
     private final PetRepository repository;
     private final PetNameRepository nameRepository;
+    private final PetSettingsRepository settingsRepository;
     private final Set<String> allowedPets;
     private final Map<String, String> petModels;
     private final Map<String, String> petRoles;
     private final Map<UUID, PetState> activePets = new ConcurrentHashMap<>();
     private volatile ScheduledFuture<?> followTask;
 
-    BetterPetsService(BetterPetsConfig config, PetRepository repository, PetNameRepository nameRepository) {
+    BetterPetsService(BetterPetsConfig config, PetRepository repository, PetNameRepository nameRepository, PetSettingsRepository settingsRepository) {
         this.config = config;
         this.repository = repository;
         this.nameRepository = nameRepository;
+        this.settingsRepository = settingsRepository;
         this.allowedPets = ConcurrentHashMap.newKeySet();
         this.allowedPets.addAll(config.pets());
         this.petModels = new ConcurrentHashMap<>(config.petModels());
@@ -75,6 +78,41 @@ final class BetterPetsService {
         removePet(event.getPlayerRef());
     }
 
+    void handlePlayerReady(PlayerReadyEvent event) {
+        if (event == null || event.getPlayer() == null) {
+            return;
+        }
+        Player player = event.getPlayer();
+        PlayerRef ref = player.getPlayerRef();
+        if (ref == null || ref.getUuid() == null) {
+            return;
+        }
+        World world = player.getWorld();
+        if (world == null) {
+            return;
+        }
+        if (!config.isWorldAllowed(world.getName())) {
+            return;
+        }
+        UUID ownerUuid = ref.getUuid();
+        if (!settingsRepository.isAutoRespawn(ownerUuid)) {
+            return;
+        }
+        String lastPet = settingsRepository.getLastPet(ownerUuid);
+        if (lastPet == null || lastPet.isBlank()) {
+            return;
+        }
+        if (!repository.hasPet(ownerUuid, lastPet.toLowerCase(Locale.ROOT))) {
+            return;
+        }
+        String modelId = resolveModelIdForPet(lastPet);
+        String roleId = resolveRoleIdForPet(lastPet);
+        if (modelId == null || modelId.isBlank() || roleId == null || roleId.isBlank()) {
+            return;
+        }
+        world.execute(() -> spawnPetInternal(ref, world, lastPet.toLowerCase(Locale.ROOT), modelId, roleId));
+    }
+
     boolean givePet(PlayerRef target, String petId) {
         if (target == null || target.getUuid() == null || petId == null || petId.isBlank()) {
             return false;
@@ -101,8 +139,23 @@ final class BetterPetsService {
         return repository.list(ownerUuid);
     }
 
+    boolean isWorldAllowed(World world) {
+        if (world == null) {
+            return false;
+        }
+        return config.isWorldAllowed(world.getName());
+    }
+
     String getPetName(UUID ownerUuid) {
         return nameRepository.getName(ownerUuid);
+    }
+
+    boolean isAutoRespawn(UUID ownerUuid) {
+        return settingsRepository.isAutoRespawn(ownerUuid);
+    }
+
+    void setAutoRespawn(UUID ownerUuid, boolean enabled) {
+        settingsRepository.setAutoRespawn(ownerUuid, enabled);
     }
 
     void setPetName(PlayerRef owner, World world, String name) {
@@ -129,6 +182,9 @@ final class BetterPetsService {
         if (owner == null || owner.getUuid() == null || type == null || type.isBlank()) {
             return false;
         }
+        if (world == null || !config.isWorldAllowed(world.getName())) {
+            return false;
+        }
         String key = type.toLowerCase();
         if (!repository.hasPet(owner.getUuid(), key)) {
             return false;
@@ -148,6 +204,7 @@ final class BetterPetsService {
         if (modelId == null || modelId.isBlank() || roleId == null || roleId.isBlank()) {
             return false;
         }
+        settingsRepository.setLastPet(owner.getUuid(), key);
         final String finalModelId = modelId;
         final String finalRoleId = roleId;
         world.execute(() -> spawnPetInternal(owner, world, key, finalModelId, finalRoleId));
@@ -156,6 +213,9 @@ final class BetterPetsService {
 
     boolean togglePetOnWorld(PlayerRef owner, World world, String type) {
         if (owner == null || owner.getUuid() == null || world == null || type == null || type.isBlank()) {
+            return false;
+        }
+        if (!config.isWorldAllowed(world.getName())) {
             return false;
         }
         String key = type.trim().toLowerCase(Locale.ROOT);
@@ -183,6 +243,7 @@ final class BetterPetsService {
         if (modelId == null || modelId.isBlank() || roleId == null || roleId.isBlank()) {
             return false;
         }
+        settingsRepository.setLastPet(owner.getUuid(), key);
         spawnPetInternal(owner, world, key, modelId, roleId);
         return true;
     }
@@ -216,6 +277,12 @@ final class BetterPetsService {
             }
             World world = resolveWorld(state.worldName);
             if (world == null) {
+                continue;
+            }
+            if (!config.isWorldAllowed(world.getName())) {
+                World currentWorld = world;
+                activePets.remove(state.ownerUuid);
+                currentWorld.execute(() -> despawnPet(currentWorld, state));
                 continue;
             }
             world.execute(() -> followPet(world, state));
@@ -290,6 +357,9 @@ final class BetterPetsService {
             return;
         }
         if (pet == null || pet.wasRemoved()) {
+            if (tryAutoRespawn(world, state)) {
+                return;
+            }
             activePets.remove(state.ownerUuid);
             return;
         }
@@ -403,6 +473,70 @@ final class BetterPetsService {
         if (existing != null) {
             despawnPet(world, existing);
         }
+    }
+
+    private boolean tryAutoRespawn(World world, PetState state) {
+        if (world == null || state == null) {
+            return false;
+        }
+        if (!config.isWorldAllowed(world.getName())) {
+            return false;
+        }
+        UUID ownerUuid = state.ownerUuid;
+        if (ownerUuid == null || !settingsRepository.isAutoRespawn(ownerUuid)) {
+            return false;
+        }
+        String lastPet = settingsRepository.getLastPet(ownerUuid);
+        if (lastPet == null || lastPet.isBlank()) {
+            return false;
+        }
+        if (!repository.hasPet(ownerUuid, lastPet.toLowerCase(Locale.ROOT))) {
+            return false;
+        }
+        Player player = resolvePlayer(world, ownerUuid);
+        if (player == null) {
+            return false;
+        }
+        PlayerRef ref = player.getPlayerRef();
+        if (ref == null || ref.getUuid() == null) {
+            return false;
+        }
+        String modelId = resolveModelIdForPet(lastPet);
+        String roleId = resolveRoleIdForPet(lastPet);
+        if (modelId == null || modelId.isBlank() || roleId == null || roleId.isBlank()) {
+            return false;
+        }
+        spawnPetInternal(ref, world, lastPet.toLowerCase(Locale.ROOT), modelId, roleId);
+        return true;
+    }
+
+    private String resolveModelIdForPet(String petId) {
+        if (petId == null) {
+            return null;
+        }
+        String key = petId.toLowerCase(Locale.ROOT);
+        boolean known = allowedPets.contains(key);
+        String modelId = petModels.get(key);
+        if (!known) {
+            if (!config.allowAnyModel()) {
+                return null;
+            }
+            modelId = resolveAnyModelId(petId, key);
+        } else {
+            modelId = normalizeModelId(modelId);
+        }
+        return modelId;
+    }
+
+    private String resolveRoleIdForPet(String petId) {
+        if (petId == null) {
+            return null;
+        }
+        String key = petId.toLowerCase(Locale.ROOT);
+        if (allowedPets.contains(key)) {
+            return petRoles.get(key);
+        }
+        return config.allowAnyModel() ? "BetterPets_Follower" : null;
     }
 
     private Player resolvePlayer(World world, UUID uuid) {

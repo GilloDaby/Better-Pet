@@ -4,6 +4,7 @@ import com.hypixel.hytale.event.EventBus;
 import com.hypixel.hytale.server.core.HytaleServer;
 import com.hypixel.hytale.server.core.command.system.CommandManager;
 import com.hypixel.hytale.server.core.event.events.player.PlayerDisconnectEvent;
+import com.hypixel.hytale.server.core.event.events.player.PlayerReadyEvent;
 import com.hypixel.hytale.server.core.plugin.JavaPlugin;
 import com.hypixel.hytale.server.core.plugin.JavaPluginInit;
 
@@ -22,7 +23,9 @@ public final class BetterPetsPlugin extends JavaPlugin {
         repository.load();
         PetNameRepository nameRepository = new PetNameRepository(getDataDirectory());
         nameRepository.load();
-        service = new BetterPetsService(config, repository, nameRepository);
+        PetSettingsRepository settingsRepository = new PetSettingsRepository(getDataDirectory());
+        settingsRepository.load();
+        service = new BetterPetsService(config, repository, nameRepository, settingsRepository);
     }
 
     @Override
@@ -31,6 +34,7 @@ public final class BetterPetsPlugin extends JavaPlugin {
 
         EventBus bus = HytaleServer.get().getEventBus();
         bus.registerGlobal(PlayerDisconnectEvent.class, service::handleDisconnect);
+        bus.registerGlobal(PlayerReadyEvent.class, service::handlePlayerReady);
 
         service.start();
         System.out.println("[BetterPets] Started.");

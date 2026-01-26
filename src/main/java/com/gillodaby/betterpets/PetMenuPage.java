@@ -58,6 +58,13 @@ final class PetMenuPage extends InteractiveCustomUIPage<PetMenuPage.PetMenuEvent
             EventData.of("@SearchQuery", "#SearchInput.Value"),
             false
         );
+        events.addEventBinding(
+            CustomUIEventBindingType.ValueChanged,
+            "#AutoRespawnToggle #CheckBox",
+            EventData.of("AutoRespawnToggle", "toggle"),
+            false
+        );
+        cmd.set("#AutoRespawnToggle #CheckBox.Value", service.isAutoRespawn(playerRef.getUuid()));
         buildPetList(cmd, events);
     }
 
@@ -68,6 +75,28 @@ final class PetMenuPage extends InteractiveCustomUIPage<PetMenuPage.PetMenuEvent
         }
         if (data.searchQuery != null) {
             handleSearch(ref, store, data.searchQuery);
+            return;
+        }
+        if (data.autoRespawnToggle != null) {
+            boolean current = service.isAutoRespawn(playerRef.getUuid());
+            service.setAutoRespawn(playerRef.getUuid(), !current);
+            UICommandBuilder cmd = new UICommandBuilder();
+            UIEventBuilder events = new UIEventBuilder();
+            events.addEventBinding(
+                CustomUIEventBindingType.ValueChanged,
+                "#SearchInput",
+                EventData.of("@SearchQuery", "#SearchInput.Value"),
+                false
+            );
+            events.addEventBinding(
+                CustomUIEventBindingType.ValueChanged,
+                "#AutoRespawnToggle #CheckBox",
+                EventData.of("AutoRespawnToggle", "toggle"),
+                false
+            );
+            cmd.set("#AutoRespawnToggle #CheckBox.Value", !current);
+            buildPetList(cmd, events);
+            sendUpdate(cmd, events, false);
             return;
         }
         if (data.petId == null || !"Spawn".equals(data.action)) {
@@ -104,6 +133,13 @@ final class PetMenuPage extends InteractiveCustomUIPage<PetMenuPage.PetMenuEvent
             EventData.of("@SearchQuery", "#SearchInput.Value"),
             false
         );
+        events.addEventBinding(
+            CustomUIEventBindingType.ValueChanged,
+            "#AutoRespawnToggle #CheckBox",
+            EventData.of("AutoRespawnToggle", "toggle"),
+            false
+        );
+        cmd.set("#AutoRespawnToggle #CheckBox.Value", service.isAutoRespawn(playerRef.getUuid()));
         buildPetList(cmd, events);
         sendUpdate(cmd, events, false);
     }
@@ -237,6 +273,9 @@ final class PetMenuPage extends InteractiveCustomUIPage<PetMenuPage.PetMenuEvent
             .append(new KeyedCodec<>("Action", Codec.STRING),
                 (data, value) -> data.action = value,
                 data -> data.action).add()
+            .append(new KeyedCodec<>("AutoRespawnToggle", Codec.STRING),
+                (data, value) -> data.autoRespawnToggle = value,
+                data -> data.autoRespawnToggle).add()
             .append(new KeyedCodec<>("@SearchQuery", Codec.STRING),
                 (data, value) -> data.searchQuery = value,
                 data -> data.searchQuery).add()
@@ -244,6 +283,7 @@ final class PetMenuPage extends InteractiveCustomUIPage<PetMenuPage.PetMenuEvent
 
         public String petId;
         public String action;
+        public String autoRespawnToggle;
         public String searchQuery;
 
         public PetMenuEventData() {

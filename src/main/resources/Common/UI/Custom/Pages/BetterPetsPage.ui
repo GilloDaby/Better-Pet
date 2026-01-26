@@ -76,6 +76,15 @@ Group {
           }
         }
 
+        Group #ToggleRow {
+          LayoutMode: Left;
+          Anchor: (Bottom: 12, Height: 28);
+
+          $C.@CheckBoxWithLabel #AutoRespawnToggle {
+            @Text = "Auto respawn";
+          }
+        }
+
         Group #Separator {
           Anchor: (Height: 2, Bottom: 0);
           Background: (Color: #1e2c3f);

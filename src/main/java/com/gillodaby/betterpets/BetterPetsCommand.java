@@ -139,6 +139,10 @@ public final class BetterPetsCommand extends AbstractCommand {
             ctx.sendMessage(Message.raw("Player not available."));
             return CompletableFuture.completedFuture(null);
         }
+        if (!service.isWorldAllowed(world)) {
+            ctx.sendMessage(Message.raw("Pets are disabled in this world."));
+            return CompletableFuture.completedFuture(null);
+        }
         String petId = ctx.get(spawnPetArg);
         boolean spawned = service.spawnPet(playerRef, world, petId);
         if (!spawned) {
