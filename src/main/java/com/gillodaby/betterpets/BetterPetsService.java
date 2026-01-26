@@ -17,6 +17,7 @@ import com.hypixel.hytale.server.core.modules.entity.component.Intangible;
 import com.hypixel.hytale.server.core.modules.entity.component.TransformComponent;
 import com.hypixel.hytale.server.core.entity.nameplate.Nameplate;
 
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -434,7 +435,29 @@ final class BetterPetsService {
             return DEFAULT_ICON_PATH;
         }
         String iconBase = base.startsWith("Model_") ? base.substring("Model_".length()) : base;
-        return "Common/UI/Custom/Pages/Memories/npcs/" + iconBase + ".png";
+        String resourceExact = "Common/UI/Custom/Pages/Memories/npcs/" + iconBase + ".png";
+        String uiExact = "Pages/Memories/npcs/" + iconBase + ".png";
+        if (resourceExists(resourceExact)) {
+            return uiExact;
+        }
+        String lowerName = iconBase.toLowerCase(Locale.ROOT);
+        String resourceLower = "Common/UI/Custom/Pages/Memories/npcs/" + lowerName + ".png";
+        String uiLower = "Pages/Memories/npcs/" + lowerName + ".png";
+        if (resourceExists(resourceLower)) {
+            return uiLower;
+        }
+        return uiExact;
+    }
+
+    private boolean resourceExists(String path) {
+        if (path == null || path.isBlank()) {
+            return false;
+        }
+        try (InputStream stream = BetterPetsService.class.getClassLoader().getResourceAsStream(path)) {
+            return stream != null;
+        } catch (Exception ignored) {
+            return false;
+        }
     }
 
     private boolean isPetAllowed(String petId) {

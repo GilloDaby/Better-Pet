@@ -59,13 +59,7 @@ pets:
   - model_bee_swarm
   - mouse
   - squirrel
-  - crossbow_turret
-  - deployable_fire_trap
-  - deployable_fire_trap_preview
   - healing_totem
-  - crossbow_turret_item_projectile
-  - healing_totem_projectile
-  - slowness_totem_projectile
   - slowness_totem
   - dragon_fire
   - dragon_frost
@@ -102,8 +96,6 @@ pets:
   - swarm_bees
   - mannequin
   - player
-  - playertestmodel_g
-  - playertestmodel_v
   - temple_mithril_guard
   - bramblekin
   - bramblekin_shaman
@@ -213,109 +205,15 @@ pets:
   - warthog
   - warthog_piglet
   - npc_elf
-  - npc_path_marker
   - npc_santa
-  - npc_spawn_marker
-  - objective_location_marker
   - cat
   - corgi
   - dog
-  - egg
-  - ingredient_poop
-  - rubble_aqua
-  - rubble_basalt
-  - rubble_calcite
-  - rubble_ice
-  - rubble_marble
-  - rubble_quartzite
-  - rubble_sandstone
-  - rubble_sandstone_red
-  - rubble_sandstone_white
-  - rubble_shale
-  - rubble_slate
-  - rubble_stone
-  - rubble_stone_mossy
-  - rubble_volcanic
-  - cactee_spike
-  - scarak_seeker_spitball
-  - feran_windwalker_wind_burst
-  - feran_windwalker_wind_vortex
-  - trash
   - skeleton_mage_corruption_orb
-  - eye_void_blast
-  - projectile
-  - fireball
-  - ice_ball
-  - ice_bolt
-  - tornado
-  - arrow_crossbow_signature
-  - arrow_crude
-  - arrow_fire
-  - arrow_frost
-  - arrow_iron
-  - arrow_ricochet
-  - arrow_ricochet_signature
-  - arrow_shortbow_signature
-  - arrow_vamp
-  - arrow_vamp_signature
-  - axe_bone
-  - axe_stone_trork
-  - bomb
   - bomb_fire_goblin
   - bomb_fire_goblin_dud
   - bomb_large_fire_goblin
-  - bomb_popberry
-  - bomb_potion_poison
-  - bullet_blunderbuss
-  - dagger_adamantite
-  - dagger_bone
-  - dagger_bronze
-  - dagger_bronze_ancient
-  - dagger_cobalt
-  - dagger_copper
-  - dagger_crude
-  - dagger_doomed
-  - dagger_fang_doomed
-  - dagger_iron
-  - dagger_mithril
-  - dagger_onyxium
-  - dagger_stone_trork
-  - dagger_thorium
-  - kunai
-  - rubble_default
-  - spear_adamantite
-  - spear_adamantite_saurian
-  - spear_bone
-  - spear_bronze
-  - spear_cobalt
-  - spear_copper
-  - spear_crude
-  - spear_double_incandescent
-  - spear_iron
-  - spear_leaf
-  - spear_mithril
-  - spear_onyxium
-  - spear_scrap
-  - spear_stone_trork
-  - spear_thorium
-  - spear_tribal
   - tank
-  - showcase_cobalt_gear
-  - showcase_copper_gear
-  - showcase_iron_gear
-  - showcase_iron_targetdummy_1
-  - showcase_mannequin_heal
-  - showcase_mannequin_inv_portal
-  - showcase_mannequin_inv_sphere
-  - showcase_mannequin_lightning
-  - showcase_mannequin_sitting
-  - showcase_onyxium_gear
-  - showcase_prisma_gear
-  - showcase_skeleton_assasin
-  - showcase_skeleton_dead
-  - showcase_skeleton_guard
-  - showcase_skeleton_tank
-  - showcase_wooden_gear
   - crab
   - crocodile
   - eel_moray
@@ -348,9 +246,6 @@ pets:
   - trilobite_black
   - trout_rainbow
   - whale_humpback
-  - boy_trail
-  - sword_charged_test
-  - test_platform
   - chicken_undead
   - cow_undead
   - ghoul
@@ -418,7 +313,6 @@ pets:
   - necromancer_void
   - spawn_void
   - spectre_void
-  - warp
   - warrior_quest
   - antelope
   - armadillo
@@ -493,13 +387,7 @@ pet-models:
   model_bee_swarm: "Critter/Model_Bee_Swarm"
   mouse: "Critter/Mouse"
   squirrel: "Critter/Squirrel"
-  crossbow_turret: "Deployables/Crossbow_Turret"
-  deployable_fire_trap: "Deployables/Deployable_Fire_Trap"
-  deployable_fire_trap_preview: "Deployables/Deployable_Fire_Trap_Preview"
   healing_totem: "Deployables/Healing_Totem"
-  crossbow_turret_item_projectile: "Deployables/Projectiles/Crossbow_Turret_Item_Projectile"
-  healing_totem_projectile: "Deployables/Projectiles/Healing_Totem_Projectile"
-  slowness_totem_projectile: "Deployables/Projectiles/Slowness_Totem_Projectile"
   slowness_totem: "Deployables/Slowness_Totem"
   dragon_fire: "Elemental/Dragon_Fire"
   dragon_frost: "Elemental/Dragon_Frost"
@@ -536,8 +424,6 @@ pet-models:
   swarm_bees: "Flying_Wildlife/Swarm_Bees"
   mannequin: "Human/Mannequin"
   player: "Human/Player"
-  playertestmodel_g: "Human/PlayerTestModel_G"
-  playertestmodel_v: "Human/PlayerTestModel_V"
   temple_mithril_guard: "Instances/Forgotten_Temple/Temple_Mithril_Guard"
   bramblekin: "Intelligent/Bramblekin/Bramblekin"
   bramblekin_shaman: "Intelligent/Bramblekin/Bramblekin_Shaman"
@@ -647,109 +533,15 @@ pet-models:
   warthog: "Livestock/Warthog"
   warthog_piglet: "Livestock/Warthog_Piglet"
   npc_elf: "NPC_Elf"
-  npc_path_marker: "NPC_Path_Marker"
   npc_santa: "NPC_Santa"
-  npc_spawn_marker: "NPC_Spawn_Marker"
-  objective_location_marker: "Objective_Location_Marker"
   cat: "Pets/Cat"
   corgi: "Pets/Corgi"
   dog: "Pets/Dog"
-  egg: "Projectiles/Items/Egg/Egg"
-  ingredient_poop: "Projectiles/Items/Ingredients/Ingredient_Poop"
-  rubble_aqua: "Projectiles/Items/Rubble/Rubble_Aqua"
-  rubble_basalt: "Projectiles/Items/Rubble/Rubble_Basalt"
-  rubble_calcite: "Projectiles/Items/Rubble/Rubble_Calcite"
-  rubble_ice: "Projectiles/Items/Rubble/Rubble_Ice"
-  rubble_marble: "Projectiles/Items/Rubble/Rubble_Marble"
-  rubble_quartzite: "Projectiles/Items/Rubble/Rubble_Quartzite"
-  rubble_sandstone: "Projectiles/Items/Rubble/Rubble_Sandstone"
-  rubble_sandstone_red: "Projectiles/Items/Rubble/Rubble_Sandstone_Red"
-  rubble_sandstone_white: "Projectiles/Items/Rubble/Rubble_Sandstone_White"
-  rubble_shale: "Projectiles/Items/Rubble/Rubble_Shale"
-  rubble_slate: "Projectiles/Items/Rubble/Rubble_Slate"
-  rubble_stone: "Projectiles/Items/Rubble/Rubble_Stone"
-  rubble_stone_mossy: "Projectiles/Items/Rubble/Rubble_Stone_Mossy"
-  rubble_volcanic: "Projectiles/Items/Rubble/Rubble_Volcanic"
-  cactee_spike: "Projectiles/NPCs/Beast/Cactee/Cactee_Spike"
-  scarak_seeker_spitball: "Projectiles/NPCs/Beasts/Scarak_Seeker/Scarak_Seeker_Spitball"
-  feran_windwalker_wind_burst: "Projectiles/NPCs/Intelligent/Feran_Windwalker/Feran_Windwalker_Wind_Burst"
-  feran_windwalker_wind_vortex: "Projectiles/NPCs/Intelligent/Feran_Windwalker/Feran_Windwalker_Wind_Vortex"
-  trash: "Projectiles/NPCs/Intelligent/Goblin_Scavenger/Trash"
   skeleton_mage_corruption_orb: "Projectiles/NPCs/Undead/Skeleton_Mage/Skeleton_Mage_Corruption_Orb"
-  eye_void_blast: "Projectiles/NPCs/Void/Eye_Void/Eye_Void_Blast"
-  projectile: "Projectiles/Projectile"
-  fireball: "Projectiles/Spells/Fireball"
-  ice_ball: "Projectiles/Spells/Ice_Ball"
-  ice_bolt: "Projectiles/Spells/Ice_Bolt"
-  tornado: "Projectiles/Spells/Tornado"
-  arrow_crossbow_signature: "Projectiles/Weapons/Arrow/Arrow_Crossbow_Signature"
-  arrow_crude: "Projectiles/Weapons/Arrow/Arrow_Crude"
-  arrow_fire: "Projectiles/Weapons/Arrow/Arrow_Fire"
-  arrow_frost: "Projectiles/Weapons/Arrow/Arrow_Frost"
-  arrow_iron: "Projectiles/Weapons/Arrow/Arrow_Iron"
-  arrow_ricochet: "Projectiles/Weapons/Arrow/Arrow_Ricochet"
-  arrow_ricochet_signature: "Projectiles/Weapons/Arrow/Arrow_Ricochet_Signature"
-  arrow_shortbow_signature: "Projectiles/Weapons/Arrow/Arrow_Shortbow_Signature"
-  arrow_vamp: "Projectiles/Weapons/Arrow/Arrow_Vamp"
-  arrow_vamp_signature: "Projectiles/Weapons/Arrow/Arrow_Vamp_Signature"
-  axe_bone: "Projectiles/Weapons/Axe/Axe_Bone"
-  axe_stone_trork: "Projectiles/Weapons/Axe/Axe_Stone_Trork"
-  bomb: "Projectiles/Weapons/Bomb/Bomb"
   bomb_fire_goblin: "Projectiles/Weapons/Bomb/Bomb_Fire_Goblin"
   bomb_fire_goblin_dud: "Projectiles/Weapons/Bomb/Bomb_Fire_Goblin_Dud"
   bomb_large_fire_goblin: "Projectiles/Weapons/Bomb/Bomb_Large_Fire_Goblin"
-  bomb_popberry: "Projectiles/Weapons/Bomb/Bomb_Popberry"
-  bomb_potion_poison: "Projectiles/Weapons/Bomb/Bomb_Potion_Poison"
-  bullet_blunderbuss: "Projectiles/Weapons/Bullet/Bullet_Blunderbuss"
-  dagger_adamantite: "Projectiles/Weapons/Dagger/Dagger_Adamantite"
-  dagger_bone: "Projectiles/Weapons/Dagger/Dagger_Bone"
-  dagger_bronze: "Projectiles/Weapons/Dagger/Dagger_Bronze"
-  dagger_bronze_ancient: "Projectiles/Weapons/Dagger/Dagger_Bronze_Ancient"
-  dagger_cobalt: "Projectiles/Weapons/Dagger/Dagger_Cobalt"
-  dagger_copper: "Projectiles/Weapons/Dagger/Dagger_Copper"
-  dagger_crude: "Projectiles/Weapons/Dagger/Dagger_Crude"
-  dagger_doomed: "Projectiles/Weapons/Dagger/Dagger_Doomed"
-  dagger_fang_doomed: "Projectiles/Weapons/Dagger/Dagger_Fang_Doomed"
-  dagger_iron: "Projectiles/Weapons/Dagger/Dagger_Iron"
-  dagger_mithril: "Projectiles/Weapons/Dagger/Dagger_Mithril"
-  dagger_onyxium: "Projectiles/Weapons/Dagger/Dagger_Onyxium"
-  dagger_stone_trork: "Projectiles/Weapons/Dagger/Dagger_Stone_Trork"
-  dagger_thorium: "Projectiles/Weapons/Dagger/Dagger_Thorium"
-  kunai: "Projectiles/Weapons/Kunai/Kunai"
-  rubble_default: "Projectiles/Weapons/Rubble/Rubble_Default"
-  spear_adamantite: "Projectiles/Weapons/Spear/Spear_Adamantite"
-  spear_adamantite_saurian: "Projectiles/Weapons/Spear/Spear_Adamantite_Saurian"
-  spear_bone: "Projectiles/Weapons/Spear/Spear_Bone"
-  spear_bronze: "Projectiles/Weapons/Spear/Spear_Bronze"
-  spear_cobalt: "Projectiles/Weapons/Spear/Spear_Cobalt"
-  spear_copper: "Projectiles/Weapons/Spear/Spear_Copper"
-  spear_crude: "Projectiles/Weapons/Spear/Spear_Crude"
-  spear_double_incandescent: "Projectiles/Weapons/Spear/Spear_Double_Incandescent"
-  spear_iron: "Projectiles/Weapons/Spear/Spear_Iron"
-  spear_leaf: "Projectiles/Weapons/Spear/Spear_Leaf"
-  spear_mithril: "Projectiles/Weapons/Spear/Spear_Mithril"
-  spear_onyxium: "Projectiles/Weapons/Spear/Spear_Onyxium"
-  spear_scrap: "Projectiles/Weapons/Spear/Spear_Scrap"
-  spear_stone_trork: "Projectiles/Weapons/Spear/Spear_Stone_Trork"
-  spear_thorium: "Projectiles/Weapons/Spear/Spear_Thorium"
-  spear_tribal: "Projectiles/Weapons/Spear/Spear_Tribal"
   tank: "Scifi/Tanks/Tank"
-  showcase_cobalt_gear: "Showcase/Showcase_Cobalt_Gear"
-  showcase_copper_gear: "Showcase/Showcase_Copper_Gear"
-  showcase_iron_gear: "Showcase/Showcase_Iron_Gear"
-  showcase_iron_targetdummy_1: "Showcase/Showcase_Iron_TargetDummy_1"
-  showcase_mannequin_heal: "Showcase/Showcase_Mannequin_Heal"
-  showcase_mannequin_inv_portal: "Showcase/Showcase_Mannequin_Inv_Portal"
-  showcase_mannequin_inv_sphere: "Showcase/Showcase_Mannequin_Inv_Sphere"
-  showcase_mannequin_lightning: "Showcase/Showcase_Mannequin_Lightning"
-  showcase_mannequin_sitting: "Showcase/Showcase_Mannequin_Sitting"
-  showcase_onyxium_gear: "Showcase/Showcase_Onyxium_Gear"
-  showcase_prisma_gear: "Showcase/Showcase_Prisma_Gear"
-  showcase_skeleton_assasin: "Showcase/Showcase_Skeleton_Assasin"
-  showcase_skeleton_dead: "Showcase/Showcase_Skeleton_Dead"
-  showcase_skeleton_guard: "Showcase/Showcase_Skeleton_Guard"
-  showcase_skeleton_tank: "Showcase/Showcase_Skeleton_Tank"
-  showcase_wooden_gear: "Showcase/Showcase_Wooden_Gear"
   crab: "Swimming_Beast/Crab"
   crocodile: "Swimming_Beast/Crocodile"
   eel_moray: "Swimming_Beast/Eel_Moray"
@@ -782,9 +574,6 @@ pet-models:
   trilobite_black: "Swimming_Wildlife/Trilobite_Black"
   trout_rainbow: "Swimming_Wildlife/Trout_Rainbow"
   whale_humpback: "Swimming_Wildlife/Whale_Humpback"
-  boy_trail: "Test/Boy_Trail"
-  sword_charged_test: "Test/Sword_Charged_Test"
-  test_platform: "Test/Test_Platform"
   chicken_undead: "Undead/Chicken_Undead"
   cow_undead: "Undead/Cow_Undead"
   ghoul: "Undead/Ghoul"
@@ -852,7 +641,6 @@ pet-models:
   necromancer_void: "Void/Necromancer_Void"
   spawn_void: "Void/Spawn_Void"
   spectre_void: "Void/Spectre_Void"
-  warp: "Warp"
   warrior_quest: "Warrior_Quest"
   antelope: "Wildlife/Antelope"
   armadillo: "Wildlife/Armadillo"
@@ -927,13 +715,7 @@ pet-roles:
   model_bee_swarm: "BetterPets_Follower"
   mouse: "BetterPets_Follower"
   squirrel: "BetterPets_Follower"
-  crossbow_turret: "BetterPets_Follower"
-  deployable_fire_trap: "BetterPets_Follower"
-  deployable_fire_trap_preview: "BetterPets_Follower"
   healing_totem: "BetterPets_Follower"
-  crossbow_turret_item_projectile: "BetterPets_Follower"
-  healing_totem_projectile: "BetterPets_Follower"
-  slowness_totem_projectile: "BetterPets_Follower"
   slowness_totem: "BetterPets_Follower"
   dragon_fire: "BetterPets_Follower"
   dragon_frost: "BetterPets_Follower"
@@ -970,8 +752,6 @@ pet-roles:
   swarm_bees: "BetterPets_Follower"
   mannequin: "BetterPets_Follower"
   player: "BetterPets_Follower"
-  playertestmodel_g: "BetterPets_Follower"
-  playertestmodel_v: "BetterPets_Follower"
   temple_mithril_guard: "BetterPets_Follower"
   bramblekin: "BetterPets_Follower"
   bramblekin_shaman: "BetterPets_Follower"
@@ -1081,109 +861,15 @@ pet-roles:
   warthog: "BetterPets_Follower"
   warthog_piglet: "BetterPets_Follower"
   npc_elf: "BetterPets_Follower"
-  npc_path_marker: "BetterPets_Follower"
   npc_santa: "BetterPets_Follower"
-  npc_spawn_marker: "BetterPets_Follower"
-  objective_location_marker: "BetterPets_Follower"
   cat: "BetterPets_Follower"
   corgi: "BetterPets_Follower"
   dog: "BetterPets_Follower"
-  egg: "BetterPets_Follower"
-  ingredient_poop: "BetterPets_Follower"
-  rubble_aqua: "BetterPets_Follower"
-  rubble_basalt: "BetterPets_Follower"
-  rubble_calcite: "BetterPets_Follower"
-  rubble_ice: "BetterPets_Follower"
-  rubble_marble: "BetterPets_Follower"
-  rubble_quartzite: "BetterPets_Follower"
-  rubble_sandstone: "BetterPets_Follower"
-  rubble_sandstone_red: "BetterPets_Follower"
-  rubble_sandstone_white: "BetterPets_Follower"
-  rubble_shale: "BetterPets_Follower"
-  rubble_slate: "BetterPets_Follower"
-  rubble_stone: "BetterPets_Follower"
-  rubble_stone_mossy: "BetterPets_Follower"
-  rubble_volcanic: "BetterPets_Follower"
-  cactee_spike: "BetterPets_Follower"
-  scarak_seeker_spitball: "BetterPets_Follower"
-  feran_windwalker_wind_burst: "BetterPets_Follower"
-  feran_windwalker_wind_vortex: "BetterPets_Follower"
-  trash: "BetterPets_Follower"
   skeleton_mage_corruption_orb: "BetterPets_Follower"
-  eye_void_blast: "BetterPets_Follower"
-  projectile: "BetterPets_Follower"
-  fireball: "BetterPets_Follower"
-  ice_ball: "BetterPets_Follower"
-  ice_bolt: "BetterPets_Follower"
-  tornado: "BetterPets_Follower"
-  arrow_crossbow_signature: "BetterPets_Follower"
-  arrow_crude: "BetterPets_Follower"
-  arrow_fire: "BetterPets_Follower"
-  arrow_frost: "BetterPets_Follower"
-  arrow_iron: "BetterPets_Follower"
-  arrow_ricochet: "BetterPets_Follower"
-  arrow_ricochet_signature: "BetterPets_Follower"
-  arrow_shortbow_signature: "BetterPets_Follower"
-  arrow_vamp: "BetterPets_Follower"
-  arrow_vamp_signature: "BetterPets_Follower"
-  axe_bone: "BetterPets_Follower"
-  axe_stone_trork: "BetterPets_Follower"
-  bomb: "BetterPets_Follower"
   bomb_fire_goblin: "BetterPets_Follower"
   bomb_fire_goblin_dud: "BetterPets_Follower"
   bomb_large_fire_goblin: "BetterPets_Follower"
-  bomb_popberry: "BetterPets_Follower"
-  bomb_potion_poison: "BetterPets_Follower"
-  bullet_blunderbuss: "BetterPets_Follower"
-  dagger_adamantite: "BetterPets_Follower"
-  dagger_bone: "BetterPets_Follower"
-  dagger_bronze: "BetterPets_Follower"
-  dagger_bronze_ancient: "BetterPets_Follower"
-  dagger_cobalt: "BetterPets_Follower"
-  dagger_copper: "BetterPets_Follower"
-  dagger_crude: "BetterPets_Follower"
-  dagger_doomed: "BetterPets_Follower"
-  dagger_fang_doomed: "BetterPets_Follower"
-  dagger_iron: "BetterPets_Follower"
-  dagger_mithril: "BetterPets_Follower"
-  dagger_onyxium: "BetterPets_Follower"
-  dagger_stone_trork: "BetterPets_Follower"
-  dagger_thorium: "BetterPets_Follower"
-  kunai: "BetterPets_Follower"
-  rubble_default: "BetterPets_Follower"
-  spear_adamantite: "BetterPets_Follower"
-  spear_adamantite_saurian: "BetterPets_Follower"
-  spear_bone: "BetterPets_Follower"
-  spear_bronze: "BetterPets_Follower"
-  spear_cobalt: "BetterPets_Follower"
-  spear_copper: "BetterPets_Follower"
-  spear_crude: "BetterPets_Follower"
-  spear_double_incandescent: "BetterPets_Follower"
-  spear_iron: "BetterPets_Follower"
-  spear_leaf: "BetterPets_Follower"
-  spear_mithril: "BetterPets_Follower"
-  spear_onyxium: "BetterPets_Follower"
-  spear_scrap: "BetterPets_Follower"
-  spear_stone_trork: "BetterPets_Follower"
-  spear_thorium: "BetterPets_Follower"
-  spear_tribal: "BetterPets_Follower"
   tank: "BetterPets_Follower"
-  showcase_cobalt_gear: "BetterPets_Follower"
-  showcase_copper_gear: "BetterPets_Follower"
-  showcase_iron_gear: "BetterPets_Follower"
-  showcase_iron_targetdummy_1: "BetterPets_Follower"
-  showcase_mannequin_heal: "BetterPets_Follower"
-  showcase_mannequin_inv_portal: "BetterPets_Follower"
-  showcase_mannequin_inv_sphere: "BetterPets_Follower"
-  showcase_mannequin_lightning: "BetterPets_Follower"
-  showcase_mannequin_sitting: "BetterPets_Follower"
-  showcase_onyxium_gear: "BetterPets_Follower"
-  showcase_prisma_gear: "BetterPets_Follower"
-  showcase_skeleton_assasin: "BetterPets_Follower"
-  showcase_skeleton_dead: "BetterPets_Follower"
-  showcase_skeleton_guard: "BetterPets_Follower"
-  showcase_skeleton_tank: "BetterPets_Follower"
-  showcase_wooden_gear: "BetterPets_Follower"
   crab: "BetterPets_Follower"
   crocodile: "BetterPets_Follower"
   eel_moray: "BetterPets_Follower"
@@ -1216,9 +902,6 @@ pet-roles:
   trilobite_black: "BetterPets_Follower"
   trout_rainbow: "BetterPets_Follower"
   whale_humpback: "BetterPets_Follower"
-  boy_trail: "BetterPets_Follower"
-  sword_charged_test: "BetterPets_Follower"
-  test_platform: "BetterPets_Follower"
   chicken_undead: "BetterPets_Follower"
   cow_undead: "BetterPets_Follower"
   ghoul: "BetterPets_Follower"
@@ -1286,7 +969,6 @@ pet-roles:
   necromancer_void: "BetterPets_Follower"
   spawn_void: "BetterPets_Follower"
   spectre_void: "BetterPets_Follower"
-  warp: "BetterPets_Follower"
   warrior_quest: "BetterPets_Follower"
   antelope: "BetterPets_Follower"
   armadillo: "BetterPets_Follower"
