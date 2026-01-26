@@ -65,7 +65,7 @@ final class PetMenuPage extends InteractiveCustomUIPage<PetMenuPage.PetMenuEvent
             false
         );
         cmd.set("#AutoRespawnToggle #CheckBox.Value", service.isAutoRespawn(playerRef.getUuid()));
-        buildPetList(cmd, events);
+        buildPetList(cmd, events, player);
     }
 
     @Override
@@ -95,7 +95,8 @@ final class PetMenuPage extends InteractiveCustomUIPage<PetMenuPage.PetMenuEvent
                 false
             );
             cmd.set("#AutoRespawnToggle #CheckBox.Value", !current);
-            buildPetList(cmd, events);
+            Player player = store.getComponent(ref, Player.getComponentType());
+            buildPetList(cmd, events, player);
             sendUpdate(cmd, events, false);
             return;
         }
@@ -118,7 +119,7 @@ final class PetMenuPage extends InteractiveCustomUIPage<PetMenuPage.PetMenuEvent
             service.togglePetOnWorld(playerRef, world, data.petId);
             UICommandBuilder cmd = new UICommandBuilder();
             UIEventBuilder events = new UIEventBuilder();
-            buildPetList(cmd, events);
+            buildPetList(cmd, events, player);
             sendUpdate(cmd, events, false);
         });
     }
@@ -140,11 +141,12 @@ final class PetMenuPage extends InteractiveCustomUIPage<PetMenuPage.PetMenuEvent
             false
         );
         cmd.set("#AutoRespawnToggle #CheckBox.Value", service.isAutoRespawn(playerRef.getUuid()));
-        buildPetList(cmd, events);
+        Player player = store.getComponent(ref, Player.getComponentType());
+        buildPetList(cmd, events, player);
         sendUpdate(cmd, events, false);
     }
 
-    private void buildPetList(UICommandBuilder cmd, UIEventBuilder events) {
+    private void buildPetList(UICommandBuilder cmd, UIEventBuilder events, Player player) {
         cmd.clear("#PetColumn0");
         cmd.clear("#PetColumn1");
         cmd.clear("#PetColumn2");

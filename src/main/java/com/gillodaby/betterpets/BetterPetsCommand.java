@@ -105,7 +105,7 @@ public final class BetterPetsCommand extends AbstractCommand {
             ctx.sendMessage(Message.raw("Player not available."));
             return CompletableFuture.completedFuture(null);
         }
-        List<String> pets = service.getOwnedPets(playerRef.getUuid());
+        List<String> pets = service.getVisiblePets(player, playerRef.getUuid());
         world.execute(() -> {
             Player resolved = playerRef.getComponent(Player.getComponentType());
             if (resolved == null || resolved.getPageManager() == null) {

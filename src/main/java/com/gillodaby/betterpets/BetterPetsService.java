@@ -32,6 +32,8 @@ import java.util.concurrent.TimeUnit;
 final class BetterPetsService {
 
     private static final String DEFAULT_ICON_PATH = "Common/UI/WorldMap/MapMarkers/Player.png";
+    private static final String OWN_PERMISSION_PREFIX = "pet.owning.";
+    private static final String OWN_PERMISSION_ALL = "pet.owning.*";
 
     private final BetterPetsConfig config;
     private final PetRepository repository;
@@ -139,6 +141,38 @@ final class BetterPetsService {
         return repository.list(ownerUuid);
     }
 
+    List<String> getAllPetsForDisplay() {
+        if (allowedPets != null && !allowedPets.isEmpty()) {
+            return new ArrayList<>(allowedPets);
+        }
+        if (petModels != null && !petModels.isEmpty()) {
+            return new ArrayList<>(petModels.keySet());
+        }
+        return List.of();
+    }
+
+    List<String> getVisiblePets(Player player, UUID ownerUuid) {
+        java.util.LinkedHashSet<String> result = new java.util.LinkedHashSet<>();
+        if (ownerUuid != null) {
+            List<String> owned = repository.list(ownerUuid);
+            if (owned != null) {
+                result.addAll(owned);
+            }
+        }
+        if (player != null) {
+            if (player.hasPermission(OWN_PERMISSION_ALL)) {
+                result.addAll(getAllPetsForDisplay());
+            } else {
+                for (String petId : getAllPetsForDisplay()) {
+                    if (hasOwningPermission(player, petId)) {
+                        result.add(petId);
+                    }
+                }
+            }
+        }
+        return new ArrayList<>(result);
+    }
+
     boolean isWorldAllowed(World world) {
         if (world == null) {
             return false;
@@ -186,7 +220,13 @@ final class BetterPetsService {
             return false;
         }
         String key = type.toLowerCase();
-        if (!repository.hasPet(owner.getUuid(), key)) {
+        Player player = resolvePlayer(world, owner.getUuid());
+        if (player == null) {
+            return false;
+        }
+        boolean hasPermission = hasOwningPermission(player, key);
+        boolean hasPet = repository.hasPet(owner.getUuid(), key);
+        if (!hasPermission && !hasPet) {
             return false;
         }
         boolean known = allowedPets.contains(key);
@@ -219,14 +259,20 @@ final class BetterPetsService {
             return false;
         }
         String key = type.trim().toLowerCase(Locale.ROOT);
-        if (!repository.hasPet(owner.getUuid(), key)) {
-            return false;
-        }
+        boolean hasPet = repository.hasPet(owner.getUuid(), key);
         PetState current = activePets.get(owner.getUuid());
         if (current != null && key.equalsIgnoreCase(current.type)) {
             despawnPet(world, current);
             activePets.remove(owner.getUuid());
             return true;
+        }
+        Player player = resolvePlayer(world, owner.getUuid());
+        if (player == null) {
+            return false;
+        }
+        boolean hasPermission = hasOwningPermission(player, key);
+        if (!hasPermission && !hasPet) {
+            return false;
         }
         boolean known = allowedPets.contains(key);
         String modelId = petModels.get(key);
@@ -387,6 +433,12 @@ final class BetterPetsService {
         double dy = playerPos.y - petPos.y;
         double dz = playerPos.z - petPos.z;
         double distSq = dx * dx + dy * dy + dz * dz;
+        double teleportDistance = config.teleportDistance();
+        if (distSq >= teleportDistance * teleportDistance) {
+non            Vector3d teleportPos = computeSpawnPosition(player);
+            petTc.setPosition(teleportPos);
+            return;
+        }
         double minDist = state.followDistance;
         if (distSq <= minDist * minDist) {
             return;
@@ -607,6 +659,15 @@ final class BetterPetsService {
         }
         return allowedPets.contains(petId) || petModels.containsKey(petId);
     }
+
+    boolean hasOwningPermission(Player player, String petId) {
+        if (player == null || petId == null || petId.isBlank()) {
+            return false;
+        }
+        String key = petId.trim().toLowerCase(Locale.ROOT);
+        return player.hasPermission(OWN_PERMISSION_ALL) || player.hasPermission(OWN_PERMISSION_PREFIX + key);
+    }
+
 
     private String resolveAnyModelId(String rawInput, String key) {
         if (rawInput == null) {

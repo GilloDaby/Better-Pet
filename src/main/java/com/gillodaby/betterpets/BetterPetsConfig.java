@@ -15,8 +15,9 @@ final class BetterPetsConfig {
 
     private static final long MIN_INTERVAL_MS = 100L;
     private static final long DEFAULT_INTERVAL_MS = 100L;
-    private static final double DEFAULT_FOLLOW_DISTANCE = 2.5;
+    private static final double DEFAULT_FOLLOW_DISTANCE = 4.0;
     private static final double DEFAULT_FOLLOW_STEP = 0.15;
+    private static final double DEFAULT_TELEPORT_DISTANCE = 10.0;
     private static final boolean DEFAULT_ALLOW_ANY_MODEL = true;
     private static final List<String> DEFAULT_ALLOWED_WORLDS = List.of();
     private static final List<String> DEFAULT_BLOCKED_WORLDS = List.of();
@@ -65,10 +66,13 @@ final class BetterPetsConfig {
                 update-interval-ms: 100
 
                 # Follow distance in blocks
-                follow-distance: 2.5
+                follow-distance: 4
 
                 # Follow step per tick (blocks)
                 follow-step: 0.15
+
+                # Teleport distance in blocks
+                teleport-distance: 10
 
                 # Allow any model id (from Spawn Entity list)
                 allow-any-model: true
@@ -85,17 +89,19 @@ final class BetterPetsConfig {
     private final long updateIntervalMs;
     private final double followDistance;
     private final double followStep;
+    private final double teleportDistance;
     private final boolean allowAnyModel;
     private final List<String> allowedWorlds;
     private final List<String> blockedWorlds;
     private final Map<String, String> petModels;
     private final Map<String, String> petRoles;
 
-    private BetterPetsConfig(List<String> pets, long updateIntervalMs, double followDistance, double followStep, boolean allowAnyModel, List<String> allowedWorlds, List<String> blockedWorlds, Map<String, String> petModels, Map<String, String> petRoles) {
+    private BetterPetsConfig(List<String> pets, long updateIntervalMs, double followDistance, double followStep, double teleportDistance, boolean allowAnyModel, List<String> allowedWorlds, List<String> blockedWorlds, Map<String, String> petModels, Map<String, String> petRoles) {
         this.pets = pets;
         this.updateIntervalMs = updateIntervalMs;
         this.followDistance = followDistance;
         this.followStep = followStep;
+        this.teleportDistance = teleportDistance;
         this.allowAnyModel = allowAnyModel;
         this.allowedWorlds = allowedWorlds;
         this.blockedWorlds = blockedWorlds;
@@ -130,6 +136,7 @@ final class BetterPetsConfig {
         long interval = DEFAULT_INTERVAL_MS;
         double distance = DEFAULT_FOLLOW_DISTANCE;
         double step = DEFAULT_FOLLOW_STEP;
+        double teleportDistance = DEFAULT_TELEPORT_DISTANCE;
         boolean allowAnyModel = DEFAULT_ALLOW_ANY_MODEL;
         List<String> allowedWorlds = new ArrayList<>(DEFAULT_ALLOWED_WORLDS);
         List<String> blockedWorlds = new ArrayList<>(DEFAULT_BLOCKED_WORLDS);
@@ -283,6 +290,12 @@ final class BetterPetsConfig {
                         } catch (NumberFormatException ignored) {
                         }
                     }
+                    case "teleport-distance" -> {
+                        try {
+                            teleportDistance = Double.parseDouble(value);
+                        } catch (NumberFormatException ignored) {
+                        }
+                    }
                     case "allow-any-model" -> allowAnyModel = value.equalsIgnoreCase("true");
                     default -> {
                     }
@@ -306,7 +319,7 @@ final class BetterPetsConfig {
             roles = new HashMap<>(DEFAULT_ROLES);
         }
         long clamped = Math.max(MIN_INTERVAL_MS, interval);
-        return new BetterPetsConfig(List.copyOf(pets), clamped, distance, step, allowAnyModel, List.copyOf(allowedWorlds), List.copyOf(blockedWorlds), Map.copyOf(models), Map.copyOf(roles));
+        return new BetterPetsConfig(List.copyOf(pets), clamped, distance, step, teleportDistance, allowAnyModel, List.copyOf(allowedWorlds), List.copyOf(blockedWorlds), Map.copyOf(models), Map.copyOf(roles));
     }
 
     List<String> pets() {
@@ -323,6 +336,10 @@ final class BetterPetsConfig {
 
     double followStep() {
         return followStep;
+    }
+
+    double teleportDistance() {
+        return teleportDistance;
     }
 
     boolean allowAnyModel() {

@@ -1,18 +1,27 @@
 {
   "Type": "Generic",
   "MaxHealth": 100,
-  "Appearance": "Wolf_Black",
+  "Appearance": "Bluegill",
   "IsMemory": false,
   "NameTranslationKey": "npc.pet.name",
   "Invulnerable": true,
   "DisableDamageGroups": ["Player"],
+  "BreathesInWater": true,
   "MotionControllerList": [
     {
-      "Type": "Walk",
-      "MaxWalkSpeed": 8,
-      "Acceleration": 6,
-      "Gravity": 35,
-      "MaxClimbHeight": 1.2
+      "Type": "Dive",
+      "MaxSwimSpeed": 10,
+      "Acceleration": 10,
+      "MaxDiveSpeed": 8,
+      "SwimDepth": 0.6,
+      "SinkRatio": 0.5,
+      "MinDiveDepth": 0,
+      "MaxDiveDepth": 100,
+      "MinDepthAboveGround": 1,
+      "MinDepthBelowSurface": 1,
+      "Gravity": 10,
+      "MaxRotationSpeed": 360,
+      "MaxSwimTurnAngle": 180
     }
   ],
   "Instructions": [
@@ -24,8 +33,8 @@
       },
       "BodyMotion": {
         "Type": "Seek",
-        "SlowDownDistance": 6,
-        "StopDistance": 4
+        "SlowDownDistance": 4,
+        "StopDistance": 2
       },
       "HeadMotion": { "Type": "Watch" }
     },
@@ -33,7 +42,7 @@
       "Sensor": { "Type": "Any" },
       "BodyMotion": {
         "Type": "WanderInCircle",
-        "Radius": 2
+        "Radius": 4
       }
     }
   ]
