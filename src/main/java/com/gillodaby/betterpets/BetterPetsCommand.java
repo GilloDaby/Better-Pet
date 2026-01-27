@@ -76,7 +76,7 @@ public final class BetterPetsCommand extends AbstractCommand {
             }
         };
         this.nameArg = name.withRequiredArg("name", "pet name", ArgTypes.STRING);
-        name.requirePermission("betterpets.use");
+        name.requirePermission("betterpets.name");
         addSubCommand(name);
     }
 

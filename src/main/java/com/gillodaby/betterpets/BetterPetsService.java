@@ -435,7 +435,7 @@ final class BetterPetsService {
         double distSq = dx * dx + dy * dy + dz * dz;
         double teleportDistance = config.teleportDistance();
         if (distSq >= teleportDistance * teleportDistance) {
-non            Vector3d teleportPos = computeSpawnPosition(player);
+            Vector3d teleportPos = computeSpawnPosition(player);
             petTc.setPosition(teleportPos);
             return;
         }
