@@ -20,6 +20,7 @@ import com.hypixel.hytale.server.core.entity.nameplate.Nameplate;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -30,6 +31,7 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 
 final class BetterPetsService {
 
@@ -773,6 +775,47 @@ final class BetterPetsService {
         }
         String key = petId.trim().toLowerCase(Locale.ROOT);
         return player.hasPermission(OWN_PERMISSION_ALL) || player.hasPermission(OWN_PERMISSION_PREFIX + key);
+    }
+
+    List<String> getAvailableRoleIds() {
+        List<String> roles = new ArrayList<>();
+        for (Path rolesDir : resolveRoleDirectories()) {
+            if (!Files.isDirectory(rolesDir)) {
+                continue;
+            }
+            try (Stream<Path> stream = Files.list(rolesDir)) {
+                stream.filter(Files::isRegularFile)
+                    .map(path -> path.getFileName().toString())
+                    .filter(name -> name.toLowerCase(Locale.ROOT).endsWith(".json"))
+                    .map(name -> name.substring(0, name.length() - 5))
+                    .filter(name -> !name.isBlank())
+                    .forEach(roles::add);
+            } catch (IOException ignored) {
+            }
+            if (!roles.isEmpty()) {
+                break;
+            }
+        }
+        roles.sort(String.CASE_INSENSITIVE_ORDER);
+        return roles;
+    }
+
+    private List<Path> resolveRoleDirectories() {
+        List<Path> candidates = new ArrayList<>();
+        String userDir = System.getProperty("user.dir");
+        if (userDir != null && !userDir.isBlank()) {
+            candidates.add(Path.of(userDir, "Server", "NPC", "Roles"));
+        }
+        candidates.add(dataDir.resolve("Server", "NPC", "Roles"));
+        Path parent = dataDir.getParent();
+        if (parent != null) {
+            candidates.add(parent.resolve("Server", "NPC", "Roles"));
+            Path grand = parent.getParent();
+            if (grand != null) {
+                candidates.add(grand.resolve("Server", "NPC", "Roles"));
+            }
+        }
+        return candidates;
     }
 
 

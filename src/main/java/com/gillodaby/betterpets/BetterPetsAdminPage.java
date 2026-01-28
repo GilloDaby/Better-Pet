@@ -155,20 +155,114 @@ final class BetterPetsAdminPage extends InteractiveCustomUIPage<BetterPetsAdminP
             String currentRole = service.getRoleForPet(petId);
             cmd.set(selector + " #PetRole.Text", currentRole == null ? "" : currentRole);
 
-            for (String role : ROLE_OPTIONS) {
-                String buttonSelector = selector + " #Role" + toRoleButtonId(role);
-                applyRoleButtonStyle(cmd, buttonSelector, role.equalsIgnoreCase(currentRole));
-                events.addEventBinding(
-                    CustomUIEventBindingType.Activating,
-                    buttonSelector,
-                    EventData.of("Action", "SetRole")
-                        .append("PetId", petId)
-                        .append("RoleId", role)
-                );
+            String iconPath = service.resolvePetIconPath(petId);
+            if (iconPath != null && !iconPath.isBlank()) {
+                PatchStyle iconStyle = new PatchStyle(Value.of(iconPath));
+                cmd.setObject(selector + " #Icon.Background", iconStyle);
+                cmd.set(selector + " #Icon.Visible", true);
+            } else {
+                cmd.set(selector + " #Icon.Visible", false);
             }
+
+            buildRoleButtons(cmd, events, selector, currentRole, petId);
+
+            events.addEventBinding(
+                CustomUIEventBindingType.Activating,
+                selector + " #CustomRoleApply",
+                EventData.of("Action", "SetRole")
+                    .append("PetId", petId)
+                    .append("@RoleId", "#CustomRoleInput.Value")
+            );
 
             index++;
         }
+    }
+
+    private void buildRoleButtons(UICommandBuilder cmd,
+                                  UIEventBuilder events,
+                                  String selector,
+                                  String currentRole,
+                                  String petId) {
+        cmd.clear(selector + " #RoleGrid");
+        List<String> roles = resolveRoleOptions();
+        if (roles.isEmpty()) {
+            return;
+        }
+        StringBuilder ui = new StringBuilder();
+        ui.append("Group { LayoutMode: Top; ");
+
+        int rowIndex = 0;
+        int colIndex = 0;
+        int rendered = 0;
+        for (int i = 0; i < roles.size(); i++) {
+            String role = roles.get(i);
+            if (role == null || role.isBlank()) {
+                continue;
+            }
+            if (colIndex == 0) {
+                ui.append("Group #RoleRow").append(rowIndex)
+                    .append(" { LayoutMode: Left; Anchor: (Height: 36); ");
+            }
+            if (colIndex > 0) {
+                ui.append("Group { Anchor: (Width: 6); }");
+            }
+            String roleButtonId = "Role" + toRoleButtonId(role);
+            ui.append("Button #").append(roleButtonId).append(" { ")
+                .append("Style: ButtonStyle(")
+                .append("Default: (Background: (Color: #1e2938)),")
+                .append("Hovered: (Background: (Color: #253246)),")
+                .append("Pressed: (Background: (Color: #1a2433))")
+                .append(");")
+                .append("FlexWeight: 1;")
+                .append("Label { Text: \"").append(escapeInline(formatRoleLabel(role))).append("\"; Style: (")
+                .append("FontSize: 12, TextColor: #d4dfe8, HorizontalAlignment: Center, VerticalAlignment: Center, RenderBold: true");
+            ui.append("); } }");
+
+            colIndex++;
+            rendered++;
+            if (colIndex >= 3) {
+                ui.append("}");
+                colIndex = 0;
+                rowIndex++;
+                if (rendered < roles.size()) {
+                    ui.append("Group { Anchor: (Height: 6); }");
+                }
+            }
+        }
+        if (colIndex > 0) {
+            ui.append("}");
+        }
+        ui.append("}");
+
+        cmd.appendInline(selector + " #RoleGrid", ui.toString());
+
+        for (String role : roles) {
+            if (role == null || role.isBlank()) {
+                continue;
+            }
+            String roleButtonId = "Role" + toRoleButtonId(role);
+            String buttonSelector = selector + " #" + roleButtonId;
+            applyRoleButtonStyle(cmd, buttonSelector, role.equalsIgnoreCase(currentRole));
+            events.addEventBinding(
+                CustomUIEventBindingType.Activating,
+                buttonSelector,
+                EventData.of("Action", "SetRole")
+                    .append("PetId", petId)
+                    .append("RoleId", role)
+            );
+        }
+    }
+
+    private List<String> resolveRoleOptions() {
+        List<String> roles = service.getAvailableRoleIds();
+        if (roles == null || roles.isEmpty()) {
+            return ROLE_OPTIONS;
+        }
+        if (roles.stream().noneMatch(role -> role.equalsIgnoreCase("BetterPetsSwimMount_Follower"))) {
+            roles = new ArrayList<>(roles);
+            roles.add("BetterPetsSwimMount_Follower");
+        }
+        return roles;
     }
 
     private void applyRoleButtonStyle(UICommandBuilder cmd, String selector, boolean active) {
@@ -186,7 +280,25 @@ final class BetterPetsAdminPage extends InteractiveCustomUIPage<BetterPetsAdminP
         if (roleId == null) {
             return "";
         }
-        return roleId.replace("_", "");
+        return roleId.replaceAll("[^A-Za-z0-9]", "");
+    }
+
+    private String formatRoleLabel(String roleId) {
+        if (roleId == null) {
+            return "";
+        }
+        String trimmed = roleId.trim();
+        if (trimmed.isEmpty()) {
+            return "";
+        }
+        if (trimmed.startsWith("BetterPets")) {
+            trimmed = trimmed.substring("BetterPets".length());
+        }
+        trimmed = trimmed.replace("_", " ").trim();
+        if (trimmed.isEmpty()) {
+            return roleId;
+        }
+        return trimmed;
     }
 
     private List<String> filterBySearch(List<String> source) {
@@ -239,6 +351,9 @@ final class BetterPetsAdminPage extends InteractiveCustomUIPage<BetterPetsAdminP
                 (data, value) -> data.petId = value,
                 data -> data.petId).add()
             .append(new KeyedCodec<>("RoleId", Codec.STRING),
+                (data, value) -> data.roleId = value,
+                data -> data.roleId).add()
+            .append(new KeyedCodec<>("@RoleId", Codec.STRING),
                 (data, value) -> data.roleId = value,
                 data -> data.roleId).add()
             .append(new KeyedCodec<>("Action", Codec.STRING),

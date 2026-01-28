@@ -8,23 +8,25 @@
   "Invulnerable": false,
   "IsMountable": true,
   "MountAnchorX": 0,
-  "MountAnchorY": 1.4,
+  "MountAnchorY": 1.1,
   "MountAnchorZ": 0,
   "MountMovementConfig": "Mount",
   "DisableDamageGroups": ["Player"],
   "MotionControllerList": [
     {
-      "Type": "Fly",
-      "MaxHorizontalSpeed": 12,
-      "MaxSinkSpeed": 3,
-      "MaxClimbSpeed": 10,
-      "MinAirSpeed": 4,
-      "Acceleration": 3,
-      "MinHeightOverGround": 3,
-      "MaxHeightOverGround": 10,
-      "MaxRollAngle": 180,
-      "MaxTurnSpeed": 360,
-      "DesiredAltitudeWeight": 1
+      "Type": "Dive",
+      "MaxSwimSpeed": 10,
+      "Acceleration": 10,
+      "MaxDiveSpeed": 8,
+      "SwimDepth": 0.6,
+      "SinkRatio": 0.5,
+      "MinDiveDepth": 0,
+      "MaxDiveDepth": 100,
+      "MinDepthAboveGround": 1,
+      "MinDepthBelowSurface": 1,
+      "Gravity": 10,
+      "MaxRotationSpeed": 360,
+      "MaxSwimTurnAngle": 180
     }
   ],
   "InteractionInstruction": {
@@ -85,8 +87,7 @@
       "BodyMotion": {
         "Type": "Seek",
         "SlowDownDistance": 6,
-        "StopDistance": 4,
-        "HeightDifference": [ -15, 15 ]
+        "StopDistance": 4
       },
       "HeadMotion": { "Type": "Watch" }
     },

@@ -4,10 +4,10 @@ Group {
   Background: (Color: #000000(0.75));
 
   Group {
-    Anchor: (Width: 780, Height: 620);
+    Anchor: (Width: 1170, Height: 930);
 
     Group #TitleBar {
-      Anchor: (Height: 70, Top: 0);
+      Anchor: (Height: 105, Top: 0);
       Background: (Color: #0a0f17);
 
       Group {
@@ -18,7 +18,7 @@ Group {
       Label #Title {
         Text: "PET ROLES";
         Style: (
-          FontSize: 26,
+          FontSize: 39,
           RenderBold: true,
           TextColor: #d4dfe8,
           RenderUppercase: true,
@@ -31,9 +31,9 @@ Group {
 
     Group #Content {
       LayoutMode: Top;
-      Anchor: (Top: 70, Bottom: 0);
+      Anchor: (Top: 105, Bottom: 0);
       Background: (Color: #0d1521);
-      Padding: (Horizontal: 25, Vertical: 20);
+      Padding: (Horizontal: 38, Vertical: 30);
 
       Group #Header {
         LayoutMode: Top;
@@ -42,36 +42,36 @@ Group {
         Label #Subtitle {
           Text: "Change pet roles";
           Style: (
-            FontSize: 13,
+            FontSize: 19,
             TextColor: #7a90a8,
             RenderUppercase: true,
             LetterSpacing: 0.5
           );
-          Anchor: (Bottom: 16);
+          Anchor: (Bottom: 24);
         }
 
         Group #SearchRow {
           LayoutMode: Left;
-          Anchor: (Bottom: 14, Height: 44);
+          Anchor: (Bottom: 21, Height: 66);
 
           Group #SearchWrapper {
             FlexWeight: 1;
-            Anchor: (Height: 44);
+            Anchor: (Height: 66);
             Background: (Color: #161e2b);
-            Padding: (Full: 2);
+            Padding: (Full: 3);
 
             TextField #SearchInput {
               PlaceholderText: "Search pets...";
               Style: (
-                FontSize: 15,
+                FontSize: 22,
                 TextColor: #d4dfe8
               );
               PlaceholderStyle: (
                 TextColor: #4a5d75,
-                FontSize: 15
+                FontSize: 22
               );
               Background: (Color: #00000000);
-              Padding: (Horizontal: 18, Vertical: 12);
+              Padding: (Horizontal: 27, Vertical: 18);
             }
           }
         }
@@ -89,31 +89,31 @@ Group {
 
         Group #PetColumns {
           LayoutMode: Left;
-          Padding: (Horizontal: 6);
+          Padding: (Horizontal: 9);
 
           Group #PetColumn0 {
             LayoutMode: Top;
-            Anchor: (Width: 240);
-            Padding: (Right: 6);
+            Anchor: (Width: 360);
+            Padding: (Right: 9);
           }
 
           Group #PetColumn1 {
             LayoutMode: Top;
-            Anchor: (Width: 240);
-            Padding: (Horizontal: 6);
+            Anchor: (Width: 360);
+            Padding: (Horizontal: 9);
           }
 
           Group #PetColumn2 {
             LayoutMode: Top;
-            Anchor: (Width: 240);
-            Padding: (Left: 6);
+            Anchor: (Width: 360);
+            Padding: (Left: 9);
           }
         }
       }
 
       Group #Footer {
         LayoutMode: Top;
-        Anchor: (Top: 14, Height: 36);
+        Anchor: (Top: 21, Height: 54);
 
         Group #FooterLine {
           Anchor: (Height: 2, Bottom: 0);
@@ -122,7 +122,7 @@ Group {
 
         Group {
           LayoutMode: Left;
-          Anchor: (Top: 12);
+          Anchor: (Top: 18);
 
           Group {
             FlexWeight: 1;
@@ -131,7 +131,7 @@ Group {
           Label #PetCount {
             Text: "";
             Style: (
-              FontSize: 11,
+              FontSize: 16,
               TextColor: #6a7d94,
               VerticalAlignment: Center,
               RenderUppercase: true,
