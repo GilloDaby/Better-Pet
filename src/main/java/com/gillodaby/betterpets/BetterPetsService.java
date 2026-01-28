@@ -778,7 +778,7 @@ final class BetterPetsService {
     }
 
     List<String> getAvailableRoleIds() {
-        List<String> roles = new ArrayList<>();
+        java.util.LinkedHashMap<String, String> unique = new java.util.LinkedHashMap<>();
         for (Path rolesDir : resolveRoleDirectories()) {
             if (!Files.isDirectory(rolesDir)) {
                 continue;
@@ -789,13 +789,11 @@ final class BetterPetsService {
                     .filter(name -> name.toLowerCase(Locale.ROOT).endsWith(".json"))
                     .map(name -> name.substring(0, name.length() - 5))
                     .filter(name -> !name.isBlank())
-                    .forEach(roles::add);
+                    .forEach(name -> unique.putIfAbsent(name.toLowerCase(Locale.ROOT), name));
             } catch (IOException ignored) {
             }
-            if (!roles.isEmpty()) {
-                break;
-            }
         }
+        List<String> roles = new ArrayList<>(unique.values());
         roles.sort(String.CASE_INSENSITIVE_ORDER);
         return roles;
     }

@@ -20,6 +20,7 @@ import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.Map;
 import java.util.List;
 
 final class BetterPetsAdminPage extends InteractiveCustomUIPage<BetterPetsAdminPage.AdminEventData> {
@@ -28,10 +29,24 @@ final class BetterPetsAdminPage extends InteractiveCustomUIPage<BetterPetsAdminP
         "BetterPets_Follower",
         "BetterPetsFly_Follower",
         "BetterPetsSwim_Follower",
+        "BetterPetsSwimMount_Follower",
         "BetterPetsMount_Follower",
         "BetterPetsFlyMounts_Follower",
         "BetterPetsSmall_Follower",
-        "BetterPetsBig_Follower"
+        "BetterPetsBig_Follower",
+        "BetterPetsBigMount_Follower"
+    );
+
+    private static final Map<String, String> ROLE_LABELS = Map.of(
+        "betterpets_follower", "Walking Pet",
+        "betterpetsfly_follower", "Flying Pet",
+        "betterpetsswim_follower", "Swim Pet",
+        "betterpetsswimmount_follower", "Swim Mount Pet",
+        "betterpetsmount_follower", "Mount Pet",
+        "betterpetsflymounts_follower", "Flying Mount Pet",
+        "betterpetssmall_follower", "Small Walking Pet",
+        "betterpetsbig_follower", "Big Walking Pet",
+        "BetterPetsBigMount_Follower", "Big Walking Mount Pet"
     );
 
     private final BetterPetsService service;
@@ -254,15 +269,7 @@ final class BetterPetsAdminPage extends InteractiveCustomUIPage<BetterPetsAdminP
     }
 
     private List<String> resolveRoleOptions() {
-        List<String> roles = service.getAvailableRoleIds();
-        if (roles == null || roles.isEmpty()) {
-            return ROLE_OPTIONS;
-        }
-        if (roles.stream().noneMatch(role -> role.equalsIgnoreCase("BetterPetsSwimMount_Follower"))) {
-            roles = new ArrayList<>(roles);
-            roles.add("BetterPetsSwimMount_Follower");
-        }
-        return roles;
+        return ROLE_OPTIONS;
     }
 
     private void applyRoleButtonStyle(UICommandBuilder cmd, String selector, boolean active) {
@@ -290,6 +297,10 @@ final class BetterPetsAdminPage extends InteractiveCustomUIPage<BetterPetsAdminP
         String trimmed = roleId.trim();
         if (trimmed.isEmpty()) {
             return "";
+        }
+        String mapped = ROLE_LABELS.get(trimmed.toLowerCase());
+        if (mapped != null && !mapped.isBlank()) {
+            return mapped;
         }
         if (trimmed.startsWith("BetterPets")) {
             trimmed = trimmed.substring("BetterPets".length());
