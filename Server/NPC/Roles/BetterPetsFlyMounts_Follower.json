@@ -10,7 +10,7 @@
   "MountAnchorX": 0,
   "MountAnchorY": 1.4,
   "MountAnchorZ": 0,
-  "MountMovementConfig": "Mount",
+  "MountMovementConfig": "FlyMount",
   "DisableDamageGroups": ["Player"],
   "MotionControllerList": [
     {
@@ -67,7 +67,7 @@
                 "AnchorX": 0,
                 "AnchorY": 1.6,
                 "AnchorZ": 0,
-                "MovementConfig": "Mount"
+                "MovementConfig": "FlyMount"
               }
             ]
           }
