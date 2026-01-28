@@ -1,0 +1,147 @@
+$C = "../Common.ui";
+
+Group {
+  Background: (Color: #000000(0.75));
+
+  Group {
+    Anchor: (Width: 780, Height: 620);
+
+    Group #TitleBar {
+      Anchor: (Height: 70, Top: 0);
+      Background: (Color: #0a0f17);
+
+      Group {
+        Anchor: (Height: 2, Bottom: 0);
+        Background: (Color: #1e2c3f);
+      }
+
+      Label #Title {
+        Text: "PET ROLES";
+        Style: (
+          FontSize: 26,
+          RenderBold: true,
+          TextColor: #d4dfe8,
+          RenderUppercase: true,
+          HorizontalAlignment: Center,
+          VerticalAlignment: Center,
+          LetterSpacing: 2
+        );
+      }
+    }
+
+    Group #Content {
+      LayoutMode: Top;
+      Anchor: (Top: 70, Bottom: 0);
+      Background: (Color: #0d1521);
+      Padding: (Horizontal: 25, Vertical: 20);
+
+      Group #Header {
+        LayoutMode: Top;
+        Anchor: (Bottom: 18);
+
+        Label #Subtitle {
+          Text: "Change pet roles";
+          Style: (
+            FontSize: 13,
+            TextColor: #7a90a8,
+            RenderUppercase: true,
+            LetterSpacing: 0.5
+          );
+          Anchor: (Bottom: 16);
+        }
+
+        Group #SearchRow {
+          LayoutMode: Left;
+          Anchor: (Bottom: 14, Height: 44);
+
+          Group #SearchWrapper {
+            FlexWeight: 1;
+            Anchor: (Height: 44);
+            Background: (Color: #161e2b);
+            Padding: (Full: 2);
+
+            TextField #SearchInput {
+              PlaceholderText: "Search pets...";
+              Style: (
+                FontSize: 15,
+                TextColor: #d4dfe8
+              );
+              PlaceholderStyle: (
+                TextColor: #4a5d75,
+                FontSize: 15
+              );
+              Background: (Color: #00000000);
+              Padding: (Horizontal: 18, Vertical: 12);
+            }
+          }
+        }
+
+        Group #Separator {
+          Anchor: (Height: 2, Bottom: 0);
+          Background: (Color: #1e2c3f);
+        }
+      }
+
+      Group #PetListContainer {
+        FlexWeight: 1;
+        LayoutMode: TopScrolling;
+        ScrollbarStyle: $C.@TranslucentScrollbarStyle;
+
+        Group #PetColumns {
+          LayoutMode: Left;
+          Padding: (Horizontal: 6);
+
+          Group #PetColumn0 {
+            LayoutMode: Top;
+            Anchor: (Width: 240);
+            Padding: (Right: 6);
+          }
+
+          Group #PetColumn1 {
+            LayoutMode: Top;
+            Anchor: (Width: 240);
+            Padding: (Horizontal: 6);
+          }
+
+          Group #PetColumn2 {
+            LayoutMode: Top;
+            Anchor: (Width: 240);
+            Padding: (Left: 6);
+          }
+        }
+      }
+
+      Group #Footer {
+        LayoutMode: Top;
+        Anchor: (Top: 14, Height: 36);
+
+        Group #FooterLine {
+          Anchor: (Height: 2, Bottom: 0);
+          Background: (Color: #1e2c3f);
+        }
+
+        Group {
+          LayoutMode: Left;
+          Anchor: (Top: 12);
+
+          Group {
+            FlexWeight: 1;
+          }
+
+          Label #PetCount {
+            Text: "";
+            Style: (
+              FontSize: 11,
+              TextColor: #6a7d94,
+              VerticalAlignment: Center,
+              RenderUppercase: true,
+              LetterSpacing: 1.2
+            );
+          }
+        }
+      }
+    }
+  }
+}
+
+$C.@BackButton {}

@@ -1,0 +1,215 @@
+$C = "../Common.ui";
+
+Group {
+  Anchor: (Width: 240, Height: 210);
+  LayoutMode: Top;
+  Background: (Color: #161e2b);
+  Padding: (Horizontal: 10, Vertical: 10);
+
+  Label #PetName {
+    Text: "Pet";
+    Style: (
+      FontSize: 13,
+      TextColor: #d4dfe8,
+      RenderBold: true,
+      HorizontalAlignment: Center
+    );
+    Anchor: (Height: 18);
+  }
+
+  Group {
+    Anchor: (Height: 4);
+  }
+
+  Label #PetRole {
+    Text: "Role";
+    Style: (
+      FontSize: 11,
+      TextColor: #7a90a8,
+      HorizontalAlignment: Center
+    );
+    Anchor: (Height: 16);
+  }
+
+  Group {
+    Anchor: (Height: 8);
+  }
+
+  Group #RoleRow1 {
+    LayoutMode: Left;
+    Anchor: (Height: 28);
+
+    Button #Role_BetterPetsFollower {
+      Style: ButtonStyle(
+        Default: (Background: (Color: #1e2938)),
+        Hovered: (Background: (Color: #253246)),
+        Pressed: (Background: (Color: #1a2433)),
+        Sounds: $C.@ButtonSounds
+      );
+      FlexWeight: 1;
+
+      Label {
+        Text: "Follow";
+        Style: (
+          FontSize: 11,
+          TextColor: #d4dfe8,
+          HorizontalAlignment: Center,
+          VerticalAlignment: Center,
+          RenderBold: true
+        );
+      }
+    }
+
+    Group { Anchor: (Width: 6); }
+
+    Button #Role_BetterPetsFlyFollower {
+      Style: ButtonStyle(
+        Default: (Background: (Color: #1e2938)),
+        Hovered: (Background: (Color: #253246)),
+        Pressed: (Background: (Color: #1a2433)),
+        Sounds: $C.@ButtonSounds
+      );
+      FlexWeight: 1;
+
+      Label {
+        Text: "Fly";
+        Style: (
+          FontSize: 11,
+          TextColor: #d4dfe8,
+          HorizontalAlignment: Center,
+          VerticalAlignment: Center,
+          RenderBold: true
+        );
+      }
+    }
+
+    Group { Anchor: (Width: 6); }
+
+    Button #Role_BetterPetsSwimFollower {
+      Style: ButtonStyle(
+        Default: (Background: (Color: #1e2938)),
+        Hovered: (Background: (Color: #253246)),
+        Pressed: (Background: (Color: #1a2433)),
+        Sounds: $C.@ButtonSounds
+      );
+      FlexWeight: 1;
+
+      Label {
+        Text: "Swim";
+        Style: (
+          FontSize: 11,
+          TextColor: #d4dfe8,
+          HorizontalAlignment: Center,
+          VerticalAlignment: Center,
+          RenderBold: true
+        );
+      }
+    }
+  }
+
+  Group {
+    Anchor: (Height: 6);
+  }
+
+  Group #RoleRow2 {
+    LayoutMode: Left;
+    Anchor: (Height: 28);
+
+    Button #Role_BetterPetsMountFollower {
+      Style: ButtonStyle(
+        Default: (Background: (Color: #1e2938)),
+        Hovered: (Background: (Color: #253246)),
+        Pressed: (Background: (Color: #1a2433)),
+        Sounds: $C.@ButtonSounds
+      );
+      FlexWeight: 1;
+
+      Label {
+        Text: "Mount";
+        Style: (
+          FontSize: 11,
+          TextColor: #d4dfe8,
+          HorizontalAlignment: Center,
+          VerticalAlignment: Center,
+          RenderBold: true
+        );
+      }
+    }
+
+    Group { Anchor: (Width: 6); }
+
+    Button #Role_BetterPetsFlyMountsFollower {
+      Style: ButtonStyle(
+        Default: (Background: (Color: #1e2938)),
+        Hovered: (Background: (Color: #253246)),
+        Pressed: (Background: (Color: #1a2433)),
+        Sounds: $C.@ButtonSounds
+      );
+      FlexWeight: 1;
+
+      Label {
+        Text: "FlyMount";
+        Style: (
+          FontSize: 11,
+          TextColor: #d4dfe8,
+          HorizontalAlignment: Center,
+          VerticalAlignment: Center,
+          RenderBold: true
+        );
+      }
+    }
+
+    Group { Anchor: (Width: 6); }
+
+    Button #Role_BetterPetsSmallFollower {
+      Style: ButtonStyle(
+        Default: (Background: (Color: #1e2938)),
+        Hovered: (Background: (Color: #253246)),
+        Pressed: (Background: (Color: #1a2433)),
+        Sounds: $C.@ButtonSounds
+      );
+      FlexWeight: 1;
+
+      Label {
+        Text: "Small";
+        Style: (
+          FontSize: 11,
+          TextColor: #d4dfe8,
+          HorizontalAlignment: Center,
+          VerticalAlignment: Center,
+          RenderBold: true
+        );
+      }
+    }
+  }
+
+  Group {
+    Anchor: (Height: 6);
+  }
+
+  Group #RoleRow3 {
+    LayoutMode: Left;
+    Anchor: (Height: 28);
+
+    Button #Role_BetterPetsBigFollower {
+      Style: ButtonStyle(
+        Default: (Background: (Color: #1e2938)),
+        Hovered: (Background: (Color: #253246)),
+        Pressed: (Background: (Color: #1a2433)),
+        Sounds: $C.@ButtonSounds
+      );
+      FlexWeight: 1;
+
+      Label {
+        Text: "Big";
+        Style: (
+          FontSize: 11,
+          TextColor: #d4dfe8,
+          HorizontalAlignment: Center,
+          VerticalAlignment: Center,
+          RenderBold: true
+        );
+      }
+    }
+  }
+}

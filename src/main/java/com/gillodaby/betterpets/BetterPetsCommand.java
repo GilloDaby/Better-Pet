@@ -79,6 +79,15 @@ public final class BetterPetsCommand extends AbstractCommand {
         name.requirePermission("betterpets.name");
         addSubCommand(name);
 
+        AbstractCommand admin = new AbstractCommand("admin", "Open pet role admin menu") {
+            @Override
+            protected CompletableFuture<Void> execute(CommandContext ctx) {
+                return handleAdmin(ctx);
+            }
+        };
+        admin.requirePermission("betterpets.admin");
+        addSubCommand(admin);
+
         AbstractCommand reload = new AbstractCommand("reload", "Reload BetterPets config") {
             @Override
             protected CompletableFuture<Void> execute(CommandContext ctx) {
@@ -236,6 +245,44 @@ public final class BetterPetsCommand extends AbstractCommand {
         }
         world.execute(() -> service.setPetName(playerRef, world, name));
         ctx.sendMessage(Message.raw("Pet name updated."));
+        return CompletableFuture.completedFuture(null);
+    }
+
+    private CompletableFuture<Void> handleAdmin(CommandContext ctx) {
+        if (!ctx.isPlayer()) {
+            ctx.sendMessage(Message.raw("Only players can open the admin menu."));
+            return CompletableFuture.completedFuture(null);
+        }
+        Player player = ctx.senderAs(Player.class);
+        if (player == null) {
+            ctx.sendMessage(Message.raw("Player not available."));
+            return CompletableFuture.completedFuture(null);
+        }
+        if (!player.hasPermission("betterpets.admin")) {
+            ctx.sendMessage(Message.raw("You do not have permission to edit pet roles."));
+            return CompletableFuture.completedFuture(null);
+        }
+        PlayerRef playerRef = player.getPlayerRef();
+        if (playerRef == null || playerRef.getUuid() == null) {
+            ctx.sendMessage(Message.raw("Player not available."));
+            return CompletableFuture.completedFuture(null);
+        }
+        World world = player.getWorld();
+        if (world == null) {
+            ctx.sendMessage(Message.raw("Player not available."));
+            return CompletableFuture.completedFuture(null);
+        }
+        List<String> pets = service.getAllPets();
+        world.execute(() -> {
+            Player resolved = playerRef.getComponent(Player.getComponentType());
+            if (resolved == null || resolved.getPageManager() == null) {
+                playerRef.sendMessage(Message.raw("Player not available."));
+                return;
+            }
+            PageManager pageManager = resolved.getPageManager();
+            Ref<EntityStore> ref = playerRef.getReference();
+            pageManager.openCustomPage(ref, ref.getStore(), new BetterPetsAdminPage(playerRef, service, pets));
+        });
         return CompletableFuture.completedFuture(null);
     }
 

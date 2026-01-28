@@ -18,6 +18,7 @@ import com.hypixel.hytale.server.core.modules.entity.component.Intangible;
 import com.hypixel.hytale.server.core.modules.entity.component.TransformComponent;
 import com.hypixel.hytale.server.core.entity.nameplate.Nameplate;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -89,10 +90,96 @@ final class BetterPetsService {
         petRoles.clear();
         petRoles.putAll(newConfig.petRoles());
         if (followTask != null) {
-            stop();
+            followTask.cancel(false);
+            followTask = null;
             start();
         }
         return true;
+    }
+
+    List<String> getAllPets() {
+        return new ArrayList<>(allowedPets);
+    }
+
+    String getRoleForPet(String petId) {
+        if (petId == null) {
+            return null;
+        }
+        return petRoles.get(petId.toLowerCase(Locale.ROOT));
+    }
+
+    synchronized boolean updatePetRole(String petId, String roleId) {
+        if (petId == null || roleId == null) {
+            return false;
+        }
+        String key = petId.trim().toLowerCase(Locale.ROOT);
+        String role = roleId.trim();
+        if (key.isEmpty() || role.isEmpty()) {
+            return false;
+        }
+        Path configPath = dataDir.resolve("config.yaml");
+        List<String> lines;
+        try {
+            lines = new ArrayList<>(java.nio.file.Files.readAllLines(configPath, java.nio.charset.StandardCharsets.UTF_8));
+        } catch (IOException e) {
+            return false;
+        }
+        List<String> output = new ArrayList<>();
+        boolean inRoles = false;
+        boolean rolesFound = false;
+        boolean updated = false;
+        for (String line : lines) {
+            String trimmed = line == null ? "" : line.trim();
+            if (trimmed.startsWith("pet-roles:")) {
+                inRoles = true;
+                rolesFound = true;
+                output.add(line);
+                continue;
+            }
+            if (inRoles) {
+                if (trimmed.isEmpty() || trimmed.startsWith("#")) {
+                    output.add(line);
+                    continue;
+                }
+                boolean indented = line.startsWith(" ") || line.startsWith("\t");
+                if (!indented) {
+                    if (!updated) {
+                        output.add("  " + key + ": \"" + role + "\"");
+                        updated = true;
+                    }
+                    inRoles = false;
+                } else {
+                    int colon = trimmed.indexOf(':');
+                    if (colon > 0) {
+                        String entryKey = trimmed.substring(0, colon).trim().toLowerCase(Locale.ROOT);
+                        if (entryKey.equals(key)) {
+                            String prefix = line.substring(0, line.indexOf(trimmed));
+                            output.add(prefix + entryKey + ": \"" + role + "\"");
+                            updated = true;
+                            continue;
+                        }
+                    }
+                    output.add(line);
+                    continue;
+                }
+            }
+            output.add(line);
+        }
+        if (rolesFound && inRoles && !updated) {
+            output.add("  " + key + ": \"" + role + "\"");
+            updated = true;
+        }
+        if (!rolesFound) {
+            output.add("");
+            output.add("pet-roles:");
+            output.add("  " + key + ": \"" + role + "\"");
+        }
+        try {
+            java.nio.file.Files.write(configPath, output, java.nio.charset.StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            return false;
+        }
+        return reloadConfig();
     }
 
     void handleDisconnect(PlayerDisconnectEvent event) {
