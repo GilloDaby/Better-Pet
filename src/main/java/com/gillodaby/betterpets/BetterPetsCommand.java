@@ -78,6 +78,15 @@ public final class BetterPetsCommand extends AbstractCommand {
         this.nameArg = name.withRequiredArg("name", "pet name", ArgTypes.STRING);
         name.requirePermission("betterpets.name");
         addSubCommand(name);
+
+        AbstractCommand reload = new AbstractCommand("reload", "Reload BetterPets config") {
+            @Override
+            protected CompletableFuture<Void> execute(CommandContext ctx) {
+                return handleReload(ctx);
+            }
+        };
+        reload.requirePermission("betterpets.admin");
+        addSubCommand(reload);
     }
 
     @Override
@@ -227,6 +236,12 @@ public final class BetterPetsCommand extends AbstractCommand {
         }
         world.execute(() -> service.setPetName(playerRef, world, name));
         ctx.sendMessage(Message.raw("Pet name updated."));
+        return CompletableFuture.completedFuture(null);
+    }
+
+    private CompletableFuture<Void> handleReload(CommandContext ctx) {
+        boolean ok = service.reloadConfig();
+        ctx.sendMessage(Message.raw(ok ? "BetterPets config reloaded." : "Failed to reload BetterPets config."));
         return CompletableFuture.completedFuture(null);
     }
 }

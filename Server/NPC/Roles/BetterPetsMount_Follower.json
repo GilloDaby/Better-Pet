@@ -1,0 +1,94 @@
+{
+  "Type": "Generic",
+  "MaxHealth": 100,
+  "Appearance": "Wolf_Black",
+  "IsMemory": false,
+  "MemoriesCategory": "Pet",
+  "NameTranslationKey": "npc.pet.name",
+  "Invulnerable": false,
+  "IsMountable": true,
+  "MountAnchorX": 0,
+  "MountAnchorY": 1.6,
+  "MountAnchorZ": 0,
+  "MountMovementConfig": "Mount",
+  "DisableDamageGroups": ["Player"],
+  "MotionControllerList": [
+    {
+      "Type": "Walk",
+      "MaxWalkSpeed": 8,
+      "Acceleration": 6,
+      "Gravity": 35,
+      "MaxClimbHeight": 1.2
+    }
+  ],
+  "InteractionInstruction": {
+    "Enabled": true,
+    "Instructions": [
+      {
+        "Instructions": [
+          {
+            "Sensor": {
+              "Type": "Not",
+              "Sensor": {
+                "Type": "CanInteract",
+                "ViewSector": 360,
+                "Attitudes": ["Neutral", "Friendly", "Hostile"]
+              }
+            },
+            "Actions": [
+              {
+                "Type": "SetInteractable",
+                "Interactable": false
+              }
+            ]
+          },
+          {
+            "Continue": true,
+            "Sensor": { "Type": "Any" },
+            "Actions": [
+              {
+                "Type": "SetInteractable",
+                "Interactable": true,
+                "Hint": "server.interactionHints.mount"
+              }
+            ]
+          },
+          {
+            "Sensor": { "Type": "HasInteracted" },
+            "Actions": [
+              {
+                "Type": "Mount",
+                "AnchorX": 0,
+                "AnchorY": 1.6,
+                "AnchorZ": 0,
+                "MovementConfig": "Mount"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "Instructions": [
+    {
+      "Sensor": {
+        "Type": "Target",
+        "TargetSlot": "LockedTarget",
+        "Range": 100
+      },
+      "BodyMotion": {
+        "Type": "Seek",
+        "SlowDownDistance": 6,
+        "StopDistance": 4
+      },
+      "HeadMotion": { "Type": "Watch" }
+    },
+    {
+      "Sensor": { "Type": "Any" },
+      "BodyMotion": {
+        "Type": "WanderInCircle",
+        "Radius": 2
+      }
+    }
+  ]
+}

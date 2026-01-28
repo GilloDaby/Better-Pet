@@ -19,6 +19,7 @@ import com.hypixel.hytale.server.core.modules.entity.component.TransformComponen
 import com.hypixel.hytale.server.core.entity.nameplate.Nameplate;
 
 import java.io.InputStream;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -35,7 +36,8 @@ final class BetterPetsService {
     private static final String OWN_PERMISSION_PREFIX = "pet.owning.";
     private static final String OWN_PERMISSION_ALL = "pet.owning.*";
 
-    private final BetterPetsConfig config;
+    private final Path dataDir;
+    private volatile BetterPetsConfig config;
     private final PetRepository repository;
     private final PetNameRepository nameRepository;
     private final PetSettingsRepository settingsRepository;
@@ -45,7 +47,8 @@ final class BetterPetsService {
     private final Map<UUID, PetState> activePets = new ConcurrentHashMap<>();
     private volatile ScheduledFuture<?> followTask;
 
-    BetterPetsService(BetterPetsConfig config, PetRepository repository, PetNameRepository nameRepository, PetSettingsRepository settingsRepository) {
+    BetterPetsService(Path dataDir, BetterPetsConfig config, PetRepository repository, PetNameRepository nameRepository, PetSettingsRepository settingsRepository) {
+        this.dataDir = dataDir;
         this.config = config;
         this.repository = repository;
         this.nameRepository = nameRepository;
@@ -71,6 +74,25 @@ final class BetterPetsService {
             followTask = null;
         }
         activePets.clear();
+    }
+
+    synchronized boolean reloadConfig() {
+        BetterPetsConfig newConfig = BetterPetsConfig.load(dataDir);
+        if (newConfig == null) {
+            return false;
+        }
+        this.config = newConfig;
+        allowedPets.clear();
+        allowedPets.addAll(newConfig.pets());
+        petModels.clear();
+        petModels.putAll(newConfig.petModels());
+        petRoles.clear();
+        petRoles.putAll(newConfig.petRoles());
+        if (followTask != null) {
+            stop();
+            start();
+        }
+        return true;
     }
 
     void handleDisconnect(PlayerDisconnectEvent event) {
@@ -363,7 +385,6 @@ final class BetterPetsService {
         } catch (Throwable ignored) {
         }
         store.ensureComponent(petRef, Invulnerable.getComponentType());
-        store.ensureComponent(petRef, Intangible.getComponentType());
 
         if (pet.getRole() == null && roleId != null && !roleId.isBlank()) {
             try {
@@ -384,7 +405,8 @@ final class BetterPetsService {
         if (world == null || state == null) {
             return;
         }
-        if (state.petRef == null || !state.petRef.isValid()) {
+        Ref<EntityStore> petRef = resolvePetRef(world, state);
+        if (petRef == null || !petRef.isValid()) {
             activePets.remove(state.ownerUuid);
             return;
         }
@@ -420,7 +442,7 @@ final class BetterPetsService {
         TransformComponent petTc;
         try {
             playerTc = store.getComponent(playerRef, TransformComponent.getComponentType());
-            petTc = store.getComponent(state.petRef, TransformComponent.getComponentType());
+            petTc = store.getComponent(petRef, TransformComponent.getComponentType());
         } catch (RuntimeException ex) {
             return;
         }
@@ -437,38 +459,20 @@ final class BetterPetsService {
         if (distSq >= teleportDistance * teleportDistance) {
             Vector3d teleportPos = computeSpawnPosition(player);
             petTc.setPosition(teleportPos);
-            return;
         }
-        double minDist = state.followDistance;
-        if (distSq <= minDist * minDist) {
-            return;
-        }
-        double dist = Math.sqrt(distSq);
-        if (dist <= 0.001) {
-            return;
-        }
-        double step = Math.min(state.followStep, dist - minDist);
-        if (step <= 0) {
-            return;
-        }
-        double nx = dx / dist;
-        double ny = dy / dist;
-        double nz = dz / dist;
-        Vector3d next = new Vector3d(
-            petPos.x + nx * step,
-            petPos.y + ny * step,
-            petPos.z + nz * step
-        );
-        petTc.setPosition(next);
     }
 
     private void despawnPet(World world, PetState state) {
         if (world == null || state == null) {
             return;
         }
+        Ref<EntityStore> petRef = resolvePetRef(world, state);
+        if (petRef == null || !petRef.isValid()) {
+            return;
+        }
         Store<EntityStore> store = world.getEntityStore().getStore();
         try {
-            store.removeEntity(state.petRef, RemoveReason.REMOVE);
+            store.removeEntity(petRef, RemoveReason.REMOVE);
         } catch (Throwable ignored) {
         }
     }
@@ -477,26 +481,42 @@ final class BetterPetsService {
         if (world == null || state == null || name == null || name.isBlank()) {
             return;
         }
-        if (state.petRef == null || !state.petRef.isValid()) {
+        Ref<EntityStore> petRef = resolvePetRef(world, state);
+        if (petRef == null || !petRef.isValid()) {
             return;
         }
         Store<EntityStore> store = world.getEntityStore().getStore();
         try {
-            NPCEntity pet = store.getComponent(state.petRef, NPCEntity.getComponentType());
+            NPCEntity pet = store.getComponent(petRef, NPCEntity.getComponentType());
             if (pet == null || pet.wasRemoved()) {
                 return;
             }
-            Nameplate np = store.getComponent(state.petRef, Nameplate.getComponentType());
+            Nameplate np = store.getComponent(petRef, Nameplate.getComponentType());
             if (np == null) {
                 np = new Nameplate(name);
                 applyLabelSettings(np);
-                store.addComponent(state.petRef, Nameplate.getComponentType(), np);
+                store.addComponent(petRef, Nameplate.getComponentType(), np);
             } else {
                 callIfExists(np, "setText", String.class, name);
                 applyLabelSettings(np);
             }
         } catch (Throwable ignored) {
         }
+    }
+
+    private Ref<EntityStore> resolvePetRef(World world, PetState state) {
+        if (world == null || state == null) {
+            return null;
+        }
+        if (state.petRef != null && state.petRef.isValid()) {
+            return state.petRef;
+        }
+        Ref<EntityStore> ref = world.getEntityRef(state.petUuid);
+        if (ref != null && ref.isValid()) {
+            state.petRef = ref;
+            return ref;
+        }
+        return state.petRef;
     }
 
     private void applyLabelSettings(Nameplate np) {
@@ -607,7 +627,7 @@ final class BetterPetsService {
             return new Vector3d(0, 0, 0);
         }
         Vector3d pos = player.getTransformComponent().getPosition();
-        return new Vector3d(pos.x + 1.5, pos.y, pos.z + 1.5);
+        return new Vector3d(pos.x + 1.5, pos.y + 1.0, pos.z + 1.5);
     }
 
     String resolvePetIconPath(String petId) {
@@ -737,7 +757,7 @@ final class BetterPetsService {
         final String worldName;
         final UUID ownerUuid;
         final UUID petUuid;
-        final Ref<EntityStore> petRef;
+        Ref<EntityStore> petRef;
         final double followDistance;
         final double followStep;
 

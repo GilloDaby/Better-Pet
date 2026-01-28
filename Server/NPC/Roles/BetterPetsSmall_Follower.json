@@ -3,15 +3,14 @@
   "MaxHealth": 100,
   "Appearance": "Wolf_Black",
   "IsMemory": false,
-  "MemoriesCategory": "Pet",
   "NameTranslationKey": "npc.pet.name",
-  "Invulnerable": false,
+  "Invulnerable": true,
   "DisableDamageGroups": ["Player"],
   "MotionControllerList": [
     {
       "Type": "Walk",
       "MaxWalkSpeed": 8,
-      "Acceleration": 6,
+      "Acceleration": 4,
       "Gravity": 35,
       "MaxClimbHeight": 1.2
     }
@@ -25,8 +24,8 @@
       },
       "BodyMotion": {
         "Type": "Seek",
-        "SlowDownDistance": 6,
-        "StopDistance": 4
+        "SlowDownDistance": 4,
+        "StopDistance": 2
       },
       "HeadMotion": { "Type": "Watch" }
     },

@@ -1,10 +1,11 @@
 {
   "Type": "Generic",
   "MaxHealth": 100,
-  "Appearance": "Bluebird",
+  "Appearance": "Wolf_Black",
   "IsMemory": false,
+  "MemoriesCategory": "Pet",
   "NameTranslationKey": "npc.pet.name",
-  "Invulnerable": true,
+  "Invulnerable": false,
   "DisableDamageGroups": ["Player"],
   "MotionControllerList": [
     {
@@ -14,10 +15,11 @@
       "MaxClimbSpeed": 10,
       "MinAirSpeed": 4,
       "Acceleration": 3,
-      "MinHeightOverGround": 5,
-      "MaxHeightOverGround": 20,
+      "MinHeightOverGround": 3,
+      "MaxHeightOverGround": 10,
       "MaxRollAngle": 180,
-      "MaxTurnSpeed": 360
+      "MaxTurnSpeed": 360,
+      "DesiredAltitudeWeight": 1
     }
   ],
   "Instructions": [
@@ -29,8 +31,9 @@
       },
       "BodyMotion": {
         "Type": "Seek",
-        "SlowDownDistance": 4,
-        "StopDistance": 2
+        "SlowDownDistance": 6,
+        "StopDistance": 4,
+        "HeightDifference": [ -15, 15 ]
       },
       "HeadMotion": { "Type": "Watch" }
     },
@@ -38,7 +41,7 @@
       "Sensor": { "Type": "Any" },
       "BodyMotion": {
         "Type": "WanderInCircle",
-        "Radius": 8
+        "Radius": 2
       }
     }
   ]

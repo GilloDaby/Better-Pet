@@ -3,9 +3,8 @@
   "MaxHealth": 100,
   "Appearance": "Wolf_Black",
   "IsMemory": false,
-  "MemoriesCategory": "Pet",
   "NameTranslationKey": "npc.pet.name",
-  "Invulnerable": false,
+  "Invulnerable": true,
   "DisableDamageGroups": ["Player"],
   "MotionControllerList": [
     {
