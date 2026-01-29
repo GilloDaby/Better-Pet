@@ -40,7 +40,7 @@
               "Sensor": {
                 "Type": "CanInteract",
                 "ViewSector": 360,
-                "Attitudes": ["Neutral", "Friendly", "Hostile"]
+                "Attitudes": ["Friendly"]
               }
             },
             "Actions": [
@@ -78,6 +78,22 @@
     ]
   },
   "Instructions": [
+    {
+      "Continue": true,
+      "Sensor": {
+        "Type": "Target",
+        "Slot": "LockedTarget",
+        "Condition": "HasTarget"
+      },
+      "Actions": [
+        {
+          "Type": "OverrideAttitude",
+          "Slot": "LockedTarget",
+          "Attitude": "Friendly",
+          "Duration": 1.0
+        }
+      ]
+    },
     {
       "Sensor": {
         "Type": "Target",
