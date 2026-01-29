@@ -1,0 +1,101 @@
+$C = "../Common.ui";
+
+Group {
+  Anchor: (Width: 360, Height: 455);
+  LayoutMode: Top;
+  Background: (Color: #161e2b);
+  Padding: (Horizontal: 15, Vertical: 15);
+
+  Group #Icon {
+    Anchor: (Width: 96, Height: 96);
+    Background: (TexturePath: "Common/UI/WorldMap/MapMarkers/Player.png");
+  }
+
+  Group {
+    Anchor: (Height: 9);
+  }
+
+  Label #PetName {
+    Text: "Pet";
+    Style: (
+      FontSize: 19,
+      TextColor: #d4dfe8,
+      RenderBold: true,
+      HorizontalAlignment: Center
+    );
+    Anchor: (Height: 27);
+  }
+
+  Group {
+    Anchor: (Height: 6);
+  }
+
+  Label #PetRole {
+    Text: "Role";
+    Style: (
+      FontSize: 16,
+      TextColor: #7a90a8,
+      HorizontalAlignment: Center
+    );
+    Anchor: (Height: 24);
+  }
+
+  Group {
+    Anchor: (Height: 12);
+  }
+
+  Group #RoleGrid {
+    LayoutMode: Top;
+  }
+
+  Group {
+    Anchor: (Height: 10);
+  }
+
+  Group #CustomRoleInputWrap {
+    LayoutMode: Top;
+    Anchor: (Height: 44);
+    Background: (Color: #111a28);
+    Padding: (Full: 2);
+
+    TextField #CustomRoleInput {
+      PlaceholderText: "BetterPets...";
+      Anchor: (Height: 40);
+      Style: (
+        FontSize: 14,
+        TextColor: #d4dfe8
+      );
+      PlaceholderStyle: (
+        TextColor: #7a90a8,
+        FontSize: 14
+      );
+      Background: (Color: #1a2433);
+      Padding: (Horizontal: 12, Vertical: 10);
+    }
+  }
+
+  Group {
+    Anchor: (Height: 8);
+  }
+
+  Button #CustomRoleApply {
+    Anchor: (Height: 36, Left: 0, Right: 0);
+    Style: ButtonStyle(
+      Default: (Background: (Color: #1e2938)),
+      Hovered: (Background: (Color: #253246)),
+      Pressed: (Background: (Color: #1a2433))
+    );
+
+    Label {
+      Text: "Apply";
+      Style: (
+        FontSize: 12,
+        TextColor: #d4dfe8,
+        HorizontalAlignment: Center,
+        VerticalAlignment: Center,
+        RenderBold: true
+      );
+    }
+  }
+
+}
