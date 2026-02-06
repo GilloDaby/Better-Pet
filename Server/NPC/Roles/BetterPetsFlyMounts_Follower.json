@@ -6,11 +6,6 @@
   "MemoriesCategory": "Pet",
   "NameTranslationKey": "npc.pet.name",
   "Invulnerable": false,
-  "IsMountable": true,
-  "MountAnchorX": 0,
-  "MountAnchorY": 1.4,
-  "MountAnchorZ": 0,
-  "MountMovementConfig": "FlyMount",
   "DisableDamageGroups": ["Player"],
   "MotionControllerList": [
     {
@@ -80,13 +75,12 @@
       "Continue": true,
       "Sensor": {
         "Type": "Target",
-        "Slot": "LockedTarget",
-        "Condition": "HasTarget"
+        "TargetSlot": "LockedTarget",
+        "Range": 100
       },
       "Actions": [
         {
           "Type": "OverrideAttitude",
-          "Slot": "LockedTarget",
           "Attitude": "Friendly",
           "Duration": 1.0
         }
