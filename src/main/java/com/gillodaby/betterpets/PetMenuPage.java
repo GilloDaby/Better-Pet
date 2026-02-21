@@ -22,16 +22,19 @@ import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 
 final class PetMenuPage extends InteractiveCustomUIPage<PetMenuPage.PetMenuEventData> {
 
     private final BetterPetsService service;
+    private final PetEffectsConfig effects;
     private final List<String> pets;
     private String currentSearchQuery;
 
-    PetMenuPage(PlayerRef playerRef, BetterPetsService service, List<String> pets) {
+    PetMenuPage(PlayerRef playerRef, BetterPetsService service, PetEffectsConfig effects, List<String> pets) {
         super(playerRef, CustomPageLifetime.CanDismiss, PetMenuEventData.CODEC);
         this.service = service;
+        this.effects = effects;
         List<String> resolved = new ArrayList<>();
         if (pets != null) {
             resolved.addAll(pets);
@@ -183,6 +186,7 @@ final class PetMenuPage extends InteractiveCustomUIPage<PetMenuPage.PetMenuEvent
             String selector = columnId + "[" + slot + "]";
             cmd.set(selector + " #PetName.Text", petId);
             cmd.set(selector + " #PetCommand.Text", "/pet spawn " + petId);
+            cmd.set(selector + " #PetEffects.Text", buildEffectsText(petId));
 
             boolean isActive = activePet != null && activePet.equalsIgnoreCase(petId);
             applyPetCardStyle(cmd, selector + " #SpawnButton", isActive);
@@ -255,6 +259,47 @@ final class PetMenuPage extends InteractiveCustomUIPage<PetMenuPage.PetMenuEvent
             + "\"; Style: (FontSize: 14, TextColor: #7a8fa8, HorizontalAlignment: Center, RenderUppercase: true);"
             + " Anchor: (Left: 0, Right: 0, Top: 140); }";
         cmd.appendInline("#PetListContainer", ui);
+    }
+
+    private String buildEffectsText(String petId) {
+        if (effects == null || petId == null || petId.isBlank()) {
+            return "No bonus";
+        }
+        List<String> parts = new ArrayList<>();
+        double mob = effects.getMobDropBonusPercent(petId);
+        if (mob > 0.0) {
+            parts.add("Mob +" + formatPercent(mob) + "%");
+        }
+        double money = effects.getMoneyBonusPercent(petId);
+        if (money > 0.0) {
+            parts.add("Money +" + formatPercent(money) + "%");
+        }
+        double crops = effects.getCropsBonusPercent(petId);
+        if (crops > 0.0) {
+            parts.add("Crops +" + formatPercent(crops) + "%");
+        }
+        double fishing = effects.getFishingBonusPercent(petId);
+        if (fishing > 0.0) {
+            parts.add("Fishing +" + formatPercent(fishing) + "%");
+        }
+        if (parts.isEmpty()) {
+            return "No bonus";
+        }
+        return String.join(" | ", parts);
+    }
+
+    private String formatPercent(double value) {
+        if (value == Math.rint(value)) {
+            return String.valueOf((int) value);
+        }
+        String text = String.format(Locale.ROOT, "%.2f", value);
+        if (text.endsWith(".00")) {
+            return text.substring(0, text.length() - 3);
+        }
+        if (text.endsWith("0")) {
+            return text.substring(0, text.length() - 1);
+        }
+        return text;
     }
 
     private String escapeInline(String raw) {

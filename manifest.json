@@ -1,26 +1,32 @@
 {
-  "Group": "GilloDaby",
-  "Name": "Better Pets",
-  "Version": "1.1.1",
-  "Description": "Cosmetic companion pets that follow players.",
-  "Authors": [
-    { "Name": "GilloDaby" }
-  ],
-  "Website": "",
-  "ServerVersion": "*",
-  "Dependencies": {},
-  "OptionalDependencies": {},
-  "DisabledByDefault": false,
-  "Main": "com.gillodaby.betterpets.BetterPetsPlugin",
-  "IncludesAssetPack": true,
-  "permissions": {
-    "betterpets.use": {
-      "description": "Use /pet menu, spawn, and remove.",
-      "default": true
-    },
-    "betterpets.admin": {
-      "description": "Grant pets to players.",
-      "default": "op"
-    }
-  }
+    "Group":  "GilloDaby",
+    "Name":  "SouzaSkyblock-PetSystem",
+    "Version":  "1.1.4",
+    "Description":  "Souza Skyblock pet system with buffs and pet UI.",
+    "Authors":  [
+                    {
+                        "Name":  "GilloDaby"
+                    }
+                ],
+    "Website":  "",
+    "ServerVersion":  "2026.02.17-255364b8e",
+    "Dependencies":  {
+
+                     },
+    "OptionalDependencies":  {
+
+                             },
+    "DisabledByDefault":  false,
+    "Main":  "com.gillodaby.betterpets.BetterPetsPlugin",
+    "IncludesAssetPack":  true,
+    "permissions":  {
+                        "betterpets.use":  {
+                                               "description":  "Use /pet menu, spawn, and remove.",
+                                               "default":  true
+                                           },
+                        "betterpets.admin":  {
+                                                 "description":  "Grant pets to players.",
+                                                 "default":  "op"
+                                             }
+                    }
 }

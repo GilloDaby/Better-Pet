@@ -49,5 +49,19 @@ Group {
       );
       Anchor: (Height: 16);
     }
+
+    Group {
+      Anchor: (Height: 4);
+    }
+
+    Label #PetEffects {
+      Text: "No bonus";
+      Style: (
+        FontSize: 10,
+        TextColor: #98adc2,
+        HorizontalAlignment: Center
+      );
+      Anchor: (Height: 14);
+    }
   }
 }

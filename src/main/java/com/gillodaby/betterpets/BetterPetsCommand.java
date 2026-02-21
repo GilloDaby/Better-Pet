@@ -19,15 +19,17 @@ import java.util.concurrent.CompletableFuture;
 public final class BetterPetsCommand extends AbstractCommand {
 
     private final BetterPetsService service;
+    private final PetEffectsConfig effects;
     private final RequiredArg<String> spawnPetArg;
     private final RequiredArg<PlayerRef> giveTargetArg;
     private final RequiredArg<String> givePetArg;
     private final RequiredArg<PlayerRef> giveAllTargetArg;
     private final RequiredArg<String> nameArg;
 
-    BetterPetsCommand(BetterPetsService service) {
+    BetterPetsCommand(BetterPetsService service, PetEffectsConfig effects) {
         super("pet", "Pet menu and commands");
         this.service = service;
+        this.effects = effects;
 
         AbstractCommand spawn = new AbstractCommand("spawn", "Spawn one of your pets") {
             @Override
@@ -132,7 +134,7 @@ public final class BetterPetsCommand extends AbstractCommand {
             }
             PageManager pageManager = resolved.getPageManager();
             Ref<EntityStore> ref = playerRef.getReference();
-            pageManager.openCustomPage(ref, ref.getStore(), new PetMenuPage(playerRef, service, pets));
+            pageManager.openCustomPage(ref, ref.getStore(), new PetMenuPage(playerRef, service, effects, pets));
         });
         return CompletableFuture.completedFuture(null);
     }
@@ -288,6 +290,9 @@ public final class BetterPetsCommand extends AbstractCommand {
 
     private CompletableFuture<Void> handleReload(CommandContext ctx) {
         boolean ok = service.reloadConfig();
+        if (effects != null) {
+            effects.reload();
+        }
         ctx.sendMessage(Message.raw(ok ? "BetterPets config reloaded." : "Failed to reload BetterPets config."));
         return CompletableFuture.completedFuture(null);
     }

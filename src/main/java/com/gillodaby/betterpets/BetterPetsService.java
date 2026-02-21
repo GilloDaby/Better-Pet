@@ -47,15 +47,17 @@ final class BetterPetsService {
     private final Set<String> allowedPets;
     private final Map<String, String> petModels;
     private final Map<String, String> petRoles;
+    private final PetEffectsConfig effects;
     private final Map<UUID, PetState> activePets = new ConcurrentHashMap<>();
     private volatile ScheduledFuture<?> followTask;
 
-    BetterPetsService(Path dataDir, BetterPetsConfig config, PetRepository repository, PetNameRepository nameRepository, PetSettingsRepository settingsRepository) {
+    BetterPetsService(Path dataDir, BetterPetsConfig config, PetRepository repository, PetNameRepository nameRepository, PetSettingsRepository settingsRepository, PetEffectsConfig effects) {
         this.dataDir = dataDir;
         this.config = config;
         this.repository = repository;
         this.nameRepository = nameRepository;
         this.settingsRepository = settingsRepository;
+        this.effects = effects;
         this.allowedPets = ConcurrentHashMap.newKeySet();
         this.allowedPets.addAll(config.pets());
         this.petModels = new ConcurrentHashMap<>(config.petModels());
@@ -321,6 +323,30 @@ final class BetterPetsService {
         }
         PetState state = activePets.get(ownerUuid);
         return state != null ? state.type : null;
+    }
+
+    double getActiveMobDropBonusPercent(UUID ownerUuid) {
+        String activePetId = getActivePetId(ownerUuid);
+        if (effects == null || activePetId == null || activePetId.isBlank()) {
+            return 0.0;
+        }
+        return effects.getMobDropBonusPercent(activePetId);
+    }
+
+    double getActiveFishingBonusPercent(UUID ownerUuid) {
+        String activePetId = getActivePetId(ownerUuid);
+        if (effects == null || activePetId == null || activePetId.isBlank()) {
+            return 0.0;
+        }
+        return effects.getFishingBonusPercent(activePetId);
+    }
+
+    double getActiveMoneyBonusPercent(UUID ownerUuid) {
+        String activePetId = getActivePetId(ownerUuid);
+        if (effects == null || activePetId == null || activePetId.isBlank()) {
+            return 0.0;
+        }
+        return effects.getMoneyBonusPercent(activePetId);
     }
 
     boolean spawnPet(PlayerRef owner, World world, String type) {

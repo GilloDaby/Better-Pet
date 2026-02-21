@@ -7,10 +7,13 @@ import com.hypixel.hytale.server.core.event.events.player.PlayerDisconnectEvent;
 import com.hypixel.hytale.server.core.event.events.player.PlayerReadyEvent;
 import com.hypixel.hytale.server.core.plugin.JavaPlugin;
 import com.hypixel.hytale.server.core.plugin.JavaPluginInit;
+import java.util.UUID;
 
 public final class BetterPetsPlugin extends JavaPlugin {
 
     private BetterPetsService service;
+    private PetEffectsConfig effectsConfig;
+    private HyFishingCatchBonusHook hyFishingCatchBonusHook;
 
     public BetterPetsPlugin(JavaPluginInit init) {
         super(init);
@@ -19,18 +22,21 @@ public final class BetterPetsPlugin extends JavaPlugin {
     @Override
     public void setup() {
         BetterPetsConfig config = BetterPetsConfig.load(getDataDirectory());
+        effectsConfig = PetEffectsConfig.load(getDataDirectory());
         PetRepository repository = new PetRepository(getDataDirectory());
         repository.load();
         PetNameRepository nameRepository = new PetNameRepository(getDataDirectory());
         nameRepository.load();
         PetSettingsRepository settingsRepository = new PetSettingsRepository(getDataDirectory());
         settingsRepository.load();
-        service = new BetterPetsService(getDataDirectory(), config, repository, nameRepository, settingsRepository);
+        service = new BetterPetsService(getDataDirectory(), config, repository, nameRepository, settingsRepository, effectsConfig);
     }
 
     @Override
     public void start() {
-        CommandManager.get().register(new BetterPetsCommand(service));
+        CommandManager.get().register(new BetterPetsCommand(service, effectsConfig));
+        this.getEntityStoreRegistry().registerSystem(new PetBonusPickupSystem(service, effectsConfig));
+        hyFishingCatchBonusHook = HyFishingCatchBonusHook.tryRegister(service);
 
         EventBus bus = HytaleServer.get().getEventBus();
         bus.registerGlobal(PlayerDisconnectEvent.class, service::handleDisconnect);
@@ -42,8 +48,19 @@ public final class BetterPetsPlugin extends JavaPlugin {
 
     @Override
     protected void shutdown() {
+        if (hyFishingCatchBonusHook != null) {
+            hyFishingCatchBonusHook.unregister();
+            hyFishingCatchBonusHook = null;
+        }
         if (service != null) {
             service.stop();
         }
+    }
+
+    public double getMoneyBonusPercent(UUID playerUuid) {
+        if (service == null || playerUuid == null) {
+            return 0.0;
+        }
+        return service.getActiveMoneyBonusPercent(playerUuid);
     }
 }
