@@ -14,7 +14,6 @@ import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import com.hypixel.hytale.server.npc.entities.NPCEntity;
 import com.hypixel.hytale.server.core.entity.entities.Player;
 import com.hypixel.hytale.server.core.modules.entity.component.Invulnerable;
-import com.hypixel.hytale.server.core.modules.entity.component.Intangible;
 import com.hypixel.hytale.server.core.modules.entity.component.TransformComponent;
 import com.hypixel.hytale.server.core.entity.nameplate.Nameplate;
 
@@ -38,26 +37,53 @@ final class BetterPetsService {
     private static final String DEFAULT_ICON_PATH = "Common/UI/WorldMap/MapMarkers/Player.png";
     private static final String OWN_PERMISSION_PREFIX = "pet.owning.";
     private static final String OWN_PERMISSION_ALL = "pet.owning.*";
+    private static final int PET_MIN_LEVEL = 1;
+    private static final int PET_MAX_LEVEL = 50;
+    private static final double BASE_MOB_DROPS_BONUS_PERCENT = 5.0;
+    private static final double BASE_FARMING_BONUS_PERCENT = 5.0;
+    private static final double BASE_FISHING_BONUS_PERCENT = 5.0;
+    private static final double BASE_MONEY_BONUS_PERCENT = 0.2;
+    private static final double BASE_POINT_INCREMENT_PERCENT = 0.5;
+    private static final double BASE_MONEY_POINT_INCREMENT_PERCENT = 0.1;
+    private static final int LEVEL_1_XP_REQUIREMENT = 100;
+    private static final int LEVEL_2_XP_REQUIREMENT = 150;
+    private static final int LEVEL_3_XP_REQUIREMENT = 275;
+    private static final int XP_PER_LEVEL_AFTER_3 = 125;
+    private static final long MONEY_XP_COOLDOWN_MS = 10_000L;
+    private static final long FARMING_XP_COOLDOWN_MS = 250L;
 
     private final Path dataDir;
     private volatile BetterPetsConfig config;
     private final PetRepository repository;
     private final PetNameRepository nameRepository;
     private final PetSettingsRepository settingsRepository;
+    private final PetProgressionRepository progressionRepository;
     private final Set<String> allowedPets;
     private final Map<String, String> petModels;
     private final Map<String, String> petRoles;
     private final PetEffectsConfig effects;
     private final Map<UUID, PetState> activePets = new ConcurrentHashMap<>();
+    private final Map<UUID, Long> moneyActivityCooldown = new ConcurrentHashMap<>();
+    private final Map<UUID, Long> farmingActivityCooldown = new ConcurrentHashMap<>();
     private volatile ScheduledFuture<?> followTask;
+    private volatile ScheduledFuture<?> progressionFlushTask;
 
-    BetterPetsService(Path dataDir, BetterPetsConfig config, PetRepository repository, PetNameRepository nameRepository, PetSettingsRepository settingsRepository, PetEffectsConfig effects) {
+    BetterPetsService(
+        Path dataDir,
+        BetterPetsConfig config,
+        PetRepository repository,
+        PetNameRepository nameRepository,
+        PetSettingsRepository settingsRepository,
+        PetEffectsConfig effects,
+        PetProgressionRepository progressionRepository
+    ) {
         this.dataDir = dataDir;
         this.config = config;
         this.repository = repository;
         this.nameRepository = nameRepository;
         this.settingsRepository = settingsRepository;
         this.effects = effects;
+        this.progressionRepository = progressionRepository;
         this.allowedPets = ConcurrentHashMap.newKeySet();
         this.allowedPets.addAll(config.pets());
         this.petModels = new ConcurrentHashMap<>(config.petModels());
@@ -71,6 +97,10 @@ final class BetterPetsService {
         long interval = Math.max(100L, config.updateIntervalMs());
         followTask = com.hypixel.hytale.server.core.HytaleServer.SCHEDULED_EXECUTOR
             .scheduleAtFixedRate(this::tickFollow, 0L, interval, TimeUnit.MILLISECONDS);
+        if (progressionFlushTask == null) {
+            progressionFlushTask = com.hypixel.hytale.server.core.HytaleServer.SCHEDULED_EXECUTOR
+                .scheduleAtFixedRate(this::flushProgression, 10L, 10L, TimeUnit.SECONDS);
+        }
     }
 
     void stop() {
@@ -78,6 +108,11 @@ final class BetterPetsService {
             followTask.cancel(false);
             followTask = null;
         }
+        if (progressionFlushTask != null) {
+            progressionFlushTask.cancel(false);
+            progressionFlushTask = null;
+        }
+        flushProgression();
         activePets.clear();
     }
 
@@ -254,6 +289,45 @@ final class BetterPetsService {
         return repository.list(ownerUuid);
     }
 
+    boolean ownsPet(UUID ownerUuid, String petId) {
+        if (ownerUuid == null || petId == null || petId.isBlank()) {
+            return false;
+        }
+        return repository.hasPet(ownerUuid, petId.trim().toLowerCase(Locale.ROOT));
+    }
+
+    boolean tradePets(UUID playerA, List<String> offerA, UUID playerB, List<String> offerB) {
+        if (playerA == null || playerB == null || playerA.equals(playerB)) {
+            return false;
+        }
+        List<String> fromA = normalizeOffer(offerA);
+        List<String> fromB = normalizeOffer(offerB);
+        boolean changed = repository.trade(playerA, fromA, playerB, fromB);
+        if (!changed) {
+            return false;
+        }
+        progressionRepository.trade(playerA, fromA, playerB, fromB);
+        progressionRepository.flush();
+        for (String petId : fromA) {
+            removeActivePetIfMatching(playerA, petId);
+        }
+        for (String petId : fromB) {
+            removeActivePetIfMatching(playerB, petId);
+        }
+        return true;
+    }
+
+    boolean resetPetProgress(UUID ownerUuid, String petId) {
+        String normalizedPetId = normalizePetId(petId);
+        if (ownerUuid == null || normalizedPetId == null) {
+            return false;
+        }
+        if (!repository.hasPet(ownerUuid, normalizedPetId)) {
+            return false;
+        }
+        return progressionRepository.resetPet(ownerUuid, normalizedPetId);
+    }
+
     List<String> getAllPetsForDisplay() {
         if (allowedPets != null && !allowedPets.isEmpty()) {
             return new ArrayList<>(allowedPets);
@@ -326,27 +400,162 @@ final class BetterPetsService {
     }
 
     double getActiveMobDropBonusPercent(UUID ownerUuid) {
-        String activePetId = getActivePetId(ownerUuid);
-        if (effects == null || activePetId == null || activePetId.isBlank()) {
-            return 0.0;
-        }
-        return effects.getMobDropBonusPercent(activePetId);
+        return getActiveBranchBonusPercent(ownerUuid, PetSkillBranch.MOB_DROPS, false);
     }
 
     double getActiveFishingBonusPercent(UUID ownerUuid) {
-        String activePetId = getActivePetId(ownerUuid);
-        if (effects == null || activePetId == null || activePetId.isBlank()) {
-            return 0.0;
-        }
-        return effects.getFishingBonusPercent(activePetId);
+        return getActiveBranchBonusPercent(ownerUuid, PetSkillBranch.FISHING, false);
     }
 
     double getActiveMoneyBonusPercent(UUID ownerUuid) {
-        String activePetId = getActivePetId(ownerUuid);
-        if (effects == null || activePetId == null || activePetId.isBlank()) {
-            return 0.0;
+        return getActiveBranchBonusPercent(ownerUuid, PetSkillBranch.MONEY, true);
+    }
+
+    double getActiveFarmingBonusPercent(UUID ownerUuid) {
+        return getActiveBranchBonusPercent(ownerUuid, PetSkillBranch.FARMING, false);
+    }
+
+    double getPetMobDropBonusPercent(UUID ownerUuid, String petId) {
+        return getPetBranchBonusPercent(ownerUuid, petId, PetSkillBranch.MOB_DROPS);
+    }
+
+    double getPetMoneyBonusPercent(UUID ownerUuid, String petId) {
+        return getPetBranchBonusPercent(ownerUuid, petId, PetSkillBranch.MONEY);
+    }
+
+    double getPetFishingBonusPercent(UUID ownerUuid, String petId) {
+        return getPetBranchBonusPercent(ownerUuid, petId, PetSkillBranch.FISHING);
+    }
+
+    double getPetFarmingBonusPercent(UUID ownerUuid, String petId) {
+        return getPetBranchBonusPercent(ownerUuid, petId, PetSkillBranch.FARMING);
+    }
+
+    PetProgressSnapshot getPetProgress(UUID ownerUuid, String petId) {
+        String normalizedPetId = normalizePetId(petId);
+        if (ownerUuid == null || normalizedPetId == null) {
+            return createDefaultProgressSnapshot(petId);
         }
-        return effects.getMoneyBonusPercent(activePetId);
+        PetProgressionRepository.PetProgressData data = progressionRepository.snapshot(ownerUuid, normalizedPetId);
+        int xpToNext = data.level >= PET_MAX_LEVEL ? 0 : xpRequiredForLevel(data.level);
+        double pointIncrement = pointIncrementPercent(data.prestige, PetSkillBranch.MOB_DROPS);
+        double moneyPointIncrement = pointIncrementPercent(data.prestige, PetSkillBranch.MONEY);
+        return new PetProgressSnapshot(
+            normalizedPetId,
+            data.level,
+            data.prestige,
+            data.xp,
+            xpToNext,
+            data.unspentPoints,
+            data.mobPoints,
+            data.moneyPoints,
+            data.fishingPoints,
+            data.farmingPoints,
+            calculateBranchBonusPercent(data, PetSkillBranch.MOB_DROPS),
+            calculateBranchBonusPercent(data, PetSkillBranch.MONEY),
+            calculateBranchBonusPercent(data, PetSkillBranch.FISHING),
+            calculateBranchBonusPercent(data, PetSkillBranch.FARMING),
+            pointIncrement,
+            moneyPointIncrement
+        );
+    }
+
+    PetProgressSnapshot addPetExperience(UUID ownerUuid, String petId, int rawAmount, PetSkillBranch activityBranch) {
+        String normalizedPetId = normalizePetId(petId);
+        if (ownerUuid == null || normalizedPetId == null || rawAmount <= 0) {
+            return createDefaultProgressSnapshot(petId);
+        }
+
+        int xpGain = Math.max(1, Math.min(10, rawAmount));
+        PetProgressionRepository.PetProgressData data;
+        int beforeLevel;
+        synchronized (progressionRepository) {
+            data = progressionRepository.getOrCreate(ownerUuid, normalizedPetId);
+            beforeLevel = data.level;
+            if (data.level < PET_MAX_LEVEL) {
+                data.xp += xpGain;
+                while (data.level < PET_MAX_LEVEL) {
+                    int required = xpRequiredForLevel(data.level);
+                    if (data.xp < required) {
+                        break;
+                    }
+                    data.xp -= required;
+                    data.level += 1;
+                    data.unspentPoints += 1;
+                }
+                if (data.level >= PET_MAX_LEVEL) {
+                    data.level = PET_MAX_LEVEL;
+                    data.xp = 0;
+                }
+                progressionRepository.markDirty();
+            }
+        }
+
+        if (data.level > beforeLevel) {
+            PlayerRef ref = Universe.get().getPlayer(ownerUuid);
+            if (ref != null) {
+                String branchName = activityBranch == null ? "Activity" : activityBranch.displayName();
+                ref.sendMessage(com.hypixel.hytale.server.core.Message.raw(
+                    "[Pet] " + normalizedPetId + " leveled up to " + data.level + " (" + branchName + "). "
+                        + "Unspent points: " + data.unspentPoints
+                ));
+            }
+        }
+        return getPetProgress(ownerUuid, normalizedPetId);
+    }
+
+    PetProgressSnapshot addExperienceToActivePet(UUID ownerUuid, int rawAmount, PetSkillBranch activityBranch) {
+        String activePetId = getActivePetId(ownerUuid);
+        if (activePetId == null || activePetId.isBlank()) {
+            return createDefaultProgressSnapshot(activePetId);
+        }
+        return addPetExperience(ownerUuid, activePetId, rawAmount, activityBranch);
+    }
+
+    boolean upgradePetBranch(UUID ownerUuid, String petId, PetSkillBranch branch) {
+        String normalizedPetId = normalizePetId(petId);
+        if (ownerUuid == null || normalizedPetId == null || branch == null) {
+            return false;
+        }
+        synchronized (progressionRepository) {
+            PetProgressionRepository.PetProgressData data = progressionRepository.getOrCreate(ownerUuid, normalizedPetId);
+            if (data.unspentPoints <= 0) {
+                return false;
+            }
+            data.unspentPoints -= 1;
+            data.addPoint(branch);
+            progressionRepository.markDirty();
+        }
+        return true;
+    }
+
+    boolean canPrestigePet(UUID ownerUuid, String petId) {
+        String normalizedPetId = normalizePetId(petId);
+        if (ownerUuid == null || normalizedPetId == null) {
+            return false;
+        }
+        PetProgressionRepository.PetProgressData data = progressionRepository.snapshot(ownerUuid, normalizedPetId);
+        return data.level >= PET_MAX_LEVEL;
+    }
+
+    boolean prestigePet(UUID ownerUuid, String petId) {
+        String normalizedPetId = normalizePetId(petId);
+        if (ownerUuid == null || normalizedPetId == null) {
+            return false;
+        }
+        synchronized (progressionRepository) {
+            PetProgressionRepository.PetProgressData data = progressionRepository.getOrCreate(ownerUuid, normalizedPetId);
+            if (data.level < PET_MAX_LEVEL) {
+                return false;
+            }
+            data.prestige += 1;
+            data.level = PET_MIN_LEVEL;
+            data.xp = 0;
+            data.unspentPoints = 0;
+            data.resetBranches();
+            progressionRepository.markDirty();
+        }
+        return true;
     }
 
     boolean spawnPet(PlayerRef owner, World world, String type) {
@@ -444,6 +653,171 @@ final class BetterPetsService {
             return;
         }
         world.execute(() -> despawnPet(world, state));
+    }
+
+    private void removeActivePetIfMatching(UUID ownerUuid, String petId) {
+        if (ownerUuid == null || petId == null || petId.isBlank()) {
+            return;
+        }
+        PetState state = activePets.get(ownerUuid);
+        if (state == null || state.type == null || !petId.equalsIgnoreCase(state.type)) {
+            return;
+        }
+        activePets.remove(ownerUuid);
+        World world = resolveWorld(state.worldName);
+        if (world == null) {
+            return;
+        }
+        world.execute(() -> despawnPet(world, state));
+    }
+
+    private List<String> normalizeOffer(List<String> offer) {
+        if (offer == null || offer.isEmpty()) {
+            return List.of();
+        }
+        java.util.LinkedHashSet<String> normalized = new java.util.LinkedHashSet<>();
+        for (String petId : offer) {
+            if (petId == null) {
+                continue;
+            }
+            String key = petId.trim().toLowerCase(Locale.ROOT);
+            if (!key.isBlank()) {
+                normalized.add(key);
+            }
+        }
+        if (normalized.isEmpty()) {
+            return List.of();
+        }
+        return new ArrayList<>(normalized);
+    }
+
+    private double getActiveBranchBonusPercent(UUID ownerUuid, PetSkillBranch branch, boolean registerMoneyActivity) {
+        String activePetId = getActivePetId(ownerUuid);
+        if (activePetId == null || activePetId.isBlank()) {
+            return 0.0;
+        }
+        if (registerMoneyActivity && branch == PetSkillBranch.MONEY) {
+            maybeGrantMoneyActivityXp(ownerUuid);
+        }
+        return getPetBranchBonusPercent(ownerUuid, activePetId, branch);
+    }
+
+    private double getPetBranchBonusPercent(UUID ownerUuid, String petId, PetSkillBranch branch) {
+        String normalizedPetId = normalizePetId(petId);
+        if (ownerUuid == null || normalizedPetId == null || branch == null) {
+            return baseBonusPercent(branch);
+        }
+        PetProgressionRepository.PetProgressData data = progressionRepository.snapshot(ownerUuid, normalizedPetId);
+        return calculateBranchBonusPercent(data, branch);
+    }
+
+    private double calculateBranchBonusPercent(PetProgressionRepository.PetProgressData data, PetSkillBranch branch) {
+        if (data == null || branch == null) {
+            return baseBonusPercent(branch);
+        }
+        int points = data.getPoints(branch);
+        double increment = pointIncrementPercent(data.prestige, branch);
+        return baseBonusPercent(branch) + (points * increment);
+    }
+
+    private double baseBonusPercent(PetSkillBranch branch) {
+        if (branch == null) {
+            return BASE_MONEY_BONUS_PERCENT;
+        }
+        return switch (branch) {
+            case MOB_DROPS -> BASE_MOB_DROPS_BONUS_PERCENT;
+            case MONEY -> BASE_MONEY_BONUS_PERCENT;
+            case FISHING -> BASE_FISHING_BONUS_PERCENT;
+            case FARMING -> BASE_FARMING_BONUS_PERCENT;
+        };
+    }
+
+    private double pointIncrementPercent(int prestige, PetSkillBranch branch) {
+        int safePrestige = Math.max(0, prestige);
+        double baseIncrement = branch == PetSkillBranch.MONEY
+            ? BASE_MONEY_POINT_INCREMENT_PERCENT
+            : BASE_POINT_INCREMENT_PERCENT;
+        return baseIncrement * (safePrestige + 1.0);
+    }
+
+    private int xpRequiredForLevel(int level) {
+        int safeLevel = Math.max(PET_MIN_LEVEL, level);
+        if (safeLevel <= 1) {
+            return LEVEL_1_XP_REQUIREMENT;
+        }
+        if (safeLevel == 2) {
+            return LEVEL_2_XP_REQUIREMENT;
+        }
+        if (safeLevel == 3) {
+            return LEVEL_3_XP_REQUIREMENT;
+        }
+        return LEVEL_3_XP_REQUIREMENT + ((safeLevel - 3) * XP_PER_LEVEL_AFTER_3);
+    }
+
+    private void maybeGrantMoneyActivityXp(UUID ownerUuid) {
+        if (ownerUuid == null) {
+            return;
+        }
+        long now = System.currentTimeMillis();
+        Long last = moneyActivityCooldown.get(ownerUuid);
+        if (last != null && (now - last) < MONEY_XP_COOLDOWN_MS) {
+            return;
+        }
+        moneyActivityCooldown.put(ownerUuid, now);
+        addExperienceToActivePet(ownerUuid, 1, PetSkillBranch.MONEY);
+    }
+
+    void addFarmingActivityXp(UUID ownerUuid, int rawAmount) {
+        if (ownerUuid == null || rawAmount <= 0) {
+            return;
+        }
+        long now = System.currentTimeMillis();
+        Long last = farmingActivityCooldown.get(ownerUuid);
+        if (last != null && (now - last) < FARMING_XP_COOLDOWN_MS) {
+            return;
+        }
+        farmingActivityCooldown.put(ownerUuid, now);
+        addExperienceToActivePet(ownerUuid, rawAmount, PetSkillBranch.FARMING);
+    }
+
+    private String normalizePetId(String petId) {
+        if (petId == null) {
+            return null;
+        }
+        String normalized = petId.trim().toLowerCase(Locale.ROOT);
+        if (normalized.isBlank()) {
+            return null;
+        }
+        return normalized;
+    }
+
+    private PetProgressSnapshot createDefaultProgressSnapshot(String petId) {
+        String normalizedPetId = normalizePetId(petId);
+        return new PetProgressSnapshot(
+            normalizedPetId == null ? "" : normalizedPetId,
+            PET_MIN_LEVEL,
+            0,
+            0,
+            xpRequiredForLevel(PET_MIN_LEVEL),
+            0,
+            0,
+            0,
+            0,
+            0,
+            BASE_MOB_DROPS_BONUS_PERCENT,
+            BASE_MONEY_BONUS_PERCENT,
+            BASE_FISHING_BONUS_PERCENT,
+            BASE_FARMING_BONUS_PERCENT,
+            BASE_POINT_INCREMENT_PERCENT,
+            BASE_MONEY_POINT_INCREMENT_PERCENT
+        );
+    }
+
+    private void flushProgression() {
+        if (progressionRepository == null) {
+            return;
+        }
+        progressionRepository.flush();
     }
 
     private void tickFollow() {

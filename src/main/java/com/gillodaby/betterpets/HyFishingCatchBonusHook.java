@@ -72,6 +72,7 @@ final class HyFishingCatchBonusHook {
             }
 
             double bonusPercent = service.getActiveFishingBonusPercent(playerUuid);
+            service.addExperienceToActivePet(playerUuid, 2, PetSkillBranch.FISHING);
             int bonusQty = calculateBonusQuantity(1, bonusPercent);
             if (bonusQty <= 0) {
                 return;

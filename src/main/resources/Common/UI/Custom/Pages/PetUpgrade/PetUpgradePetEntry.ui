@@ -1,0 +1,28 @@
+$C = "../../Common.ui";
+
+Group {
+  Anchor: (Height: 42, Bottom: 6);
+
+  Button #SelectButton {
+    Anchor: (Full: 0);
+    Padding: (Horizontal: 12, Vertical: 8);
+    Style: ButtonStyle(
+      Default: (Background: (Color: #162338)),
+      Hovered: (Background: (Color: #1c2d46)),
+      Pressed: (Background: (Color: #142136))
+    );
+
+    Label #PetName {
+      Text: "pet";
+      Anchor: (Full: 0);
+      Style: (...$C.@DefaultLabelStyle, FontSize: 13, TextColor: #f2ebdb, RenderBold: true, VerticalAlignment: Center, HorizontalAlignment: Start);
+    }
+  }
+
+  Group #SelectedOverlay {
+    Anchor: (Full: 0);
+    Background: #52c98a40;
+    Visible: false;
+  }
+}
+

@@ -1,152 +1,107 @@
 $C = "../Common.ui";
+$C.@PageOverlay #PetsRoot {
+  LayoutMode: Middle;
 
-Group {
-  Background: (Color: #000000(0.75));
+  Group #PetsPanel {
+    Anchor: (Width: 1120, Height: 820);
+    LayoutMode: Top;
+    Padding: (Full: 20);
+    Background: (TexturePath: "../Common/ContainerFullPatch.png", Border: 20);
 
-  Group {
-    Anchor: (Width: 700, Height: 580);
+    Label #Title {
+      Text: "YOUR PETS";
+      Anchor: (Height: 44, Bottom: 4);
+      Style: (...$C.@DefaultLabelStyle, FontSize: 34, RenderBold: true, TextColor: #d9e5f2, HorizontalAlignment: Center, RenderUppercase: true);
+    }
 
-    Group #TitleBar {
-      Anchor: (Height: 70, Top: 0);
-      Background: (Color: #0a0f17);
-
-      Group {
-        Anchor: (Height: 2, Bottom: 0);
-        Background: (Color: #1e2c3f);
-      }
-
-      Label #Title {
-        Text: "YOUR PETS";
-        Style: (
-          FontSize: 26,
-          RenderBold: true,
-          TextColor: #d4dfe8,
-          RenderUppercase: true,
-          HorizontalAlignment: Center,
-          VerticalAlignment: Center,
-          LetterSpacing: 2
-        );
-      }
+    Label #Subtitle {
+      Text: "Select a pet to spawn";
+      Anchor: (Height: 20, Bottom: 12);
+      Style: (...$C.@DefaultLabelStyle, FontSize: 12, TextColor: #a8bed3, HorizontalAlignment: Center, RenderUppercase: true);
     }
 
     Group #Content {
+      FlexWeight: 1;
       LayoutMode: Top;
-      Anchor: (Top: 70, Bottom: 0);
-      Background: (Color: #0d1521);
-      Padding: (Horizontal: 25, Vertical: 20);
+      Padding: (Full: 14);
+      Background: (TexturePath: "../Common/ContainerPanelPatch.png", Border: 10);
 
-      Group #Header {
-        LayoutMode: Top;
-        Anchor: (Bottom: 18);
+      Group #SearchRow {
+        LayoutMode: Left;
+        Anchor: (Height: 42, Bottom: 10);
 
-        Label #Subtitle {
-          Text: "Select a pet to spawn";
-          Style: (
-            FontSize: 13,
-            TextColor: #7a90a8,
-            RenderUppercase: true,
-            LetterSpacing: 0.5
-          );
-          Anchor: (Bottom: 16);
-        }
+        Group #SearchWrapper {
+          FlexWeight: 1;
+          Anchor: (Height: 42);
+          Background: (Color: #161e2b);
+          Padding: (Full: 2);
 
-        Group #SearchRow {
-          LayoutMode: Left;
-          Anchor: (Bottom: 14, Height: 44);
-
-          Group #SearchWrapper {
-            FlexWeight: 1;
-            Anchor: (Height: 44);
-            Background: (Color: #161e2b);
-            Padding: (Full: 2);
-
-            TextField #SearchInput {
-              PlaceholderText: "Search pets...";
-              Style: (
-                FontSize: 15,
-                TextColor: #d4dfe8
-              );
-              PlaceholderStyle: (
-                TextColor: #4a5d75,
-                FontSize: 15
-              );
-              Background: (Color: #00000000);
-              Padding: (Horizontal: 18, Vertical: 12);
-            }
+          TextField #SearchInput {
+            PlaceholderText: "Search pets...";
+            Style: (FontSize: 15, TextColor: #d4dfe8);
+            PlaceholderStyle: (TextColor: #4a5d75, FontSize: 15);
+            Background: (Color: #00000000);
+            Padding: (Horizontal: 14, Vertical: 10);
           }
         }
 
-        Group #ToggleRow {
-          LayoutMode: Left;
-          Anchor: (Bottom: 12, Height: 28);
+        Group { Anchor: (Width: 10); }
 
-          $C.@CheckBoxWithLabel #AutoRespawnToggle {
-            @Text = "Auto respawn";
-          }
+        $C.@SecondaryTextButton #TradeHintBtn {
+          @Anchor = (Width: 180, Height: 38);
+          Text: "/pet trade";
+          Disabled: true;
         }
+      }
 
-        Group #Separator {
-          Anchor: (Height: 2, Bottom: 0);
-          Background: (Color: #1e2c3f);
+      Group #ToggleRow {
+        LayoutMode: Left;
+        Anchor: (Height: 30, Bottom: 12);
+
+        $C.@CheckBoxWithLabel #AutoRespawnToggle {
+          @Text = "Auto respawn active pet";
         }
       }
 
       Group #PetListContainer {
         FlexWeight: 1;
         LayoutMode: TopScrolling;
-        ScrollbarStyle: $C.@TranslucentScrollbarStyle;
+        ScrollbarStyle: $C.@DefaultScrollbarStyle;
+        Padding: (Left: 8, Right: 8, Top: 8, Bottom: 8);
+        Background: (TexturePath: "../Common/ContainerPanelPatch.png", Border: 10);
 
         Group #PetColumns {
           LayoutMode: Left;
-          Padding: (Horizontal: 6);
+          Padding: (Horizontal: 4);
 
           Group #PetColumn0 {
             LayoutMode: Top;
-            Anchor: (Width: 210);
+            Anchor: (Width: 350);
             Padding: (Right: 6);
           }
 
           Group #PetColumn1 {
             LayoutMode: Top;
-            Anchor: (Width: 210);
+            Anchor: (Width: 350);
             Padding: (Horizontal: 6);
           }
 
           Group #PetColumn2 {
             LayoutMode: Top;
-            Anchor: (Width: 210);
+            Anchor: (Width: 350);
             Padding: (Left: 6);
           }
         }
       }
 
       Group #Footer {
-        LayoutMode: Top;
-        Anchor: (Top: 14, Height: 36);
+        Anchor: (Height: 40, Top: 10);
+        LayoutMode: Left;
 
-        Group #FooterLine {
-          Anchor: (Height: 2, Bottom: 0);
-          Background: (Color: #1e2c3f);
-        }
-
-        Group {
-          LayoutMode: Left;
-          Anchor: (Top: 12);
-
-          Group {
-            FlexWeight: 1;
-          }
-
-          Label #PetCount {
-            Text: "";
-            Style: (
-              FontSize: 11,
-              TextColor: #6a7d94,
-              VerticalAlignment: Center,
-              RenderUppercase: true,
-              LetterSpacing: 1.2
-            );
-          }
+        Label #PetCount {
+          Text: "0 PETS OWNED";
+          FlexWeight: 1;
+          Style: (...$C.@DefaultLabelStyle, FontSize: 12, TextColor: #8ea5bb, HorizontalAlignment: End, VerticalAlignment: Center, RenderUppercase: true);
         }
       }
     }
@@ -154,3 +109,4 @@ Group {
 }
 
 $C.@BackButton {}
+

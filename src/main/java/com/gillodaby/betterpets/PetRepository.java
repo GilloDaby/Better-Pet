@@ -139,6 +139,26 @@ final class PetRepository {
         return added;
     }
 
+    synchronized boolean removePet(UUID uuid, String petId) {
+        if (uuid == null || petId == null || petId.isBlank()) {
+            return false;
+        }
+        Set<String> petSet = pets.get(uuid);
+        if (petSet == null || petSet.isEmpty()) {
+            return false;
+        }
+        String normalized = normalizeId(petId);
+        boolean removed = petSet.remove(normalized);
+        if (!removed) {
+            return false;
+        }
+        if (petSet.isEmpty()) {
+            pets.remove(uuid);
+        }
+        save();
+        return true;
+    }
+
     synchronized int giveAll(UUID uuid, List<String> petIds) {
         if (uuid == null || petIds == null || petIds.isEmpty()) {
             return 0;
@@ -155,6 +175,72 @@ final class PetRepository {
             save();
         }
         return added;
+    }
+
+    synchronized boolean trade(UUID playerA, List<String> offerA, UUID playerB, List<String> offerB) {
+        if (playerA == null || playerB == null || playerA.equals(playerB)) {
+            return false;
+        }
+        List<String> normalizedA = normalizeOffer(offerA);
+        List<String> normalizedB = normalizeOffer(offerB);
+        if (normalizedA.isEmpty() && normalizedB.isEmpty()) {
+            return true;
+        }
+
+        Set<String> setA = pets.computeIfAbsent(playerA, ignored -> new TreeSet<>());
+        Set<String> setB = pets.computeIfAbsent(playerB, ignored -> new TreeSet<>());
+
+        for (String petId : normalizedA) {
+            if (!setA.contains(petId)) {
+                return false;
+            }
+            if (setB.contains(petId)) {
+                return false;
+            }
+        }
+        for (String petId : normalizedB) {
+            if (!setB.contains(petId)) {
+                return false;
+            }
+            if (setA.contains(petId)) {
+                return false;
+            }
+        }
+
+        for (String petId : normalizedA) {
+            setA.remove(petId);
+            setB.add(petId);
+        }
+        for (String petId : normalizedB) {
+            setB.remove(petId);
+            setA.add(petId);
+        }
+
+        if (setA.isEmpty()) {
+            pets.remove(playerA);
+        }
+        if (setB.isEmpty()) {
+            pets.remove(playerB);
+        }
+        save();
+        return true;
+    }
+
+    private List<String> normalizeOffer(List<String> offer) {
+        if (offer == null || offer.isEmpty()) {
+            return List.of();
+        }
+        Set<String> unique = new TreeSet<>();
+        for (String petId : offer) {
+            String normalized = normalizeId(petId);
+            if (!normalized.isBlank()) {
+                unique.add(normalized);
+            }
+        }
+        if (unique.isEmpty()) {
+            return List.of();
+        }
+        return new ArrayList<>(unique);
     }
 
     private String normalizeId(String value) {

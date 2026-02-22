@@ -1,0 +1,47 @@
+$C = "../../Common.ui";
+
+Group {
+  Anchor: (Width: 392, Height: 70, Bottom: 6);
+
+  Button #SelectButton {
+    Anchor: (Full: 0);
+    LayoutMode: Left;
+    Padding: (Horizontal: 10, Vertical: 7);
+    Style: ButtonStyle(
+      Default: (Background: (Color: #162338)),
+      Hovered: (Background: (Color: #1c2d46)),
+      Pressed: (Background: (Color: #142136))
+    );
+
+    Group #Icon {
+      Anchor: (Width: 36, Height: 36);
+      Background: (TexturePath: "Common/UI/WorldMap/MapMarkers/Player.png");
+    }
+
+    Group { Anchor: (Width: 10); }
+
+    Group {
+      LayoutMode: Top;
+      FlexWeight: 1;
+
+      Label #PetName {
+        Anchor: (Height: 18);
+        Text: "pet";
+        Style: (...$C.@DefaultLabelStyle, FontSize: 13, RenderBold: true, TextColor: #f2ebdb, HorizontalAlignment: Start, VerticalAlignment: Center);
+      }
+
+      Label #PetMeta {
+        Anchor: (Height: 16);
+        Text: "Lvl 1 | P0 | XP 0/100";
+        Style: (...$C.@DefaultLabelStyle, FontSize: 11, TextColor: #9ab6d3, HorizontalAlignment: Start, VerticalAlignment: Center);
+      }
+
+      Label #PetHint {
+        Anchor: (Height: 14);
+        Text: "Click to add";
+        Style: (...$C.@DefaultLabelStyle, FontSize: 10, TextColor: #7f94ab, HorizontalAlignment: Start, VerticalAlignment: Center);
+      }
+    }
+  }
+}
+

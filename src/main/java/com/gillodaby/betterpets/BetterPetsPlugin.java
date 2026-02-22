@@ -14,6 +14,8 @@ public final class BetterPetsPlugin extends JavaPlugin {
     private BetterPetsService service;
     private PetEffectsConfig effectsConfig;
     private HyFishingCatchBonusHook hyFishingCatchBonusHook;
+    private TheEconomyBridge economyBridge;
+    private PetTradeManager tradeManager;
 
     public BetterPetsPlugin(JavaPluginInit init) {
         super(init);
@@ -29,17 +31,46 @@ public final class BetterPetsPlugin extends JavaPlugin {
         nameRepository.load();
         PetSettingsRepository settingsRepository = new PetSettingsRepository(getDataDirectory());
         settingsRepository.load();
-        service = new BetterPetsService(getDataDirectory(), config, repository, nameRepository, settingsRepository, effectsConfig);
+        PetProgressionRepository progressionRepository = new PetProgressionRepository(getDataDirectory());
+        progressionRepository.load();
+        service = new BetterPetsService(
+            getDataDirectory(),
+            config,
+            repository,
+            nameRepository,
+            settingsRepository,
+            effectsConfig,
+            progressionRepository
+        );
+        economyBridge = new TheEconomyBridge();
+        tradeManager = new PetTradeManager(service, economyBridge);
     }
 
     @Override
     public void start() {
-        CommandManager.get().register(new BetterPetsCommand(service, effectsConfig));
-        this.getEntityStoreRegistry().registerSystem(new PetBonusPickupSystem(service, effectsConfig));
+        if (economyBridge != null) {
+            boolean connected = economyBridge.connect();
+            System.out.println("[BetterPets] TheEconomy connection: " + (connected ? "OK" : "Unavailable"));
+        }
+
+        CommandManager.get().register(new BetterPetsCommand(service, effectsConfig, tradeManager));
+        this.getEntityStoreRegistry().registerSystem(new PetBonusPickupSystem(service));
+        this.getEntityStoreRegistry().registerSystem(new PetMobKillXpSystem(service));
+        this.getEntityStoreRegistry().registerSystem(new PetFarmingUseBlockXpSystem(service));
+        this.getEntityStoreRegistry().registerSystem(new PetFarmingBreakBlockXpSystem(service));
         hyFishingCatchBonusHook = HyFishingCatchBonusHook.tryRegister(service);
 
         EventBus bus = HytaleServer.get().getEventBus();
         bus.registerGlobal(PlayerDisconnectEvent.class, service::handleDisconnect);
+        bus.registerGlobal(PlayerDisconnectEvent.class, event -> {
+            if (tradeManager == null || event == null || event.getPlayerRef() == null) {
+                return;
+            }
+            UUID playerUuid = event.getPlayerRef().getUuid();
+            if (playerUuid != null) {
+                tradeManager.handleDisconnect(playerUuid);
+            }
+        });
         bus.registerGlobal(PlayerReadyEvent.class, service::handlePlayerReady);
 
         service.start();
@@ -54,6 +85,9 @@ public final class BetterPetsPlugin extends JavaPlugin {
         }
         if (service != null) {
             service.stop();
+        }
+        if (tradeManager != null) {
+            tradeManager.shutdown();
         }
     }
 

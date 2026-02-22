@@ -1,101 +1,72 @@
 $C = "../Common.ui";
-
 Group {
-  Anchor: (Width: 360, Height: 455);
+  Anchor: (Width: 398, Height: 420, Bottom: 8);
   LayoutMode: Top;
-  Background: (Color: #161e2b);
-  Padding: (Horizontal: 15, Vertical: 15);
-
-  Group #Icon {
-    Anchor: (Width: 96, Height: 96);
-    Background: (TexturePath: "Common/UI/WorldMap/MapMarkers/Player.png");
-  }
+  Padding: (Full: 10);
+  Background: (TexturePath: "../Common/ContainerPanelPatch.png", Border: 8);
 
   Group {
-    Anchor: (Height: 9);
+    Anchor: (Height: 72, Bottom: 8);
+    LayoutMode: Left;
+
+    Group #Icon {
+      Anchor: (Width: 64, Height: 64);
+      Background: (TexturePath: "Common/UI/WorldMap/MapMarkers/Player.png");
+    }
+
+    Group { Anchor: (Width: 10); }
+
+    Group {
+      FlexWeight: 1;
+      LayoutMode: Top;
+
+      Label #PetName {
+        Text: "Pet";
+        Anchor: (Height: 24);
+        Style: (...$C.@DefaultLabelStyle, FontSize: 18, RenderBold: true, TextColor: #f2ebdb, HorizontalAlignment: Start, VerticalAlignment: Center);
+      }
+
+      Label #PetRole {
+        Text: "Role";
+        Anchor: (Height: 20);
+        Style: (...$C.@DefaultLabelStyle, FontSize: 12, TextColor: #a9c0d8, HorizontalAlignment: Start, VerticalAlignment: Center);
+      }
+    }
   }
 
-  Label #PetName {
-    Text: "Pet";
-    Style: (
-      FontSize: 19,
-      TextColor: #d4dfe8,
-      RenderBold: true,
-      HorizontalAlignment: Center
-    );
-    Anchor: (Height: 27);
-  }
-
-  Group {
-    Anchor: (Height: 6);
-  }
-
-  Label #PetRole {
-    Text: "Role";
-    Style: (
-      FontSize: 16,
-      TextColor: #7a90a8,
-      HorizontalAlignment: Center
-    );
-    Anchor: (Height: 24);
-  }
-
-  Group {
-    Anchor: (Height: 12);
+  Label {
+    Text: "Presets";
+    Anchor: (Height: 16, Bottom: 6);
+    Style: (...$C.@DefaultLabelStyle, FontSize: 11, TextColor: #8ea5bb, HorizontalAlignment: Start, RenderUppercase: true);
   }
 
   Group #RoleGrid {
-    LayoutMode: Top;
-  }
-
-  Group {
-    Anchor: (Height: 10);
+    Anchor: (Height: 210, Bottom: 10);
+    LayoutMode: TopScrolling;
+    ScrollbarStyle: $C.@TranslucentScrollbarStyle;
+    Padding: (Left: 2, Right: 2, Top: 2, Bottom: 2);
+    Background: (Color: #0f1a2d);
   }
 
   Group #CustomRoleInputWrap {
     LayoutMode: Top;
-    Anchor: (Height: 44);
-    Background: (Color: #111a28);
+    Anchor: (Height: 40, Bottom: 8);
+    Background: (Color: #161e2b);
     Padding: (Full: 2);
 
     TextField #CustomRoleInput {
-      PlaceholderText: "BetterPets...";
-      Anchor: (Height: 40);
-      Style: (
-        FontSize: 14,
-        TextColor: #d4dfe8
-      );
-      PlaceholderStyle: (
-        TextColor: #7a90a8,
-        FontSize: 14
-      );
-      Background: (Color: #1a2433);
-      Padding: (Horizontal: 12, Vertical: 10);
+      PlaceholderText: "Type custom role id...";
+      Anchor: (Height: 36);
+      Style: (FontSize: 13, TextColor: #d4dfe8);
+      PlaceholderStyle: (TextColor: #7a90a8, FontSize: 13);
+      Background: (Color: #00000000);
+      Padding: (Horizontal: 12, Vertical: 9);
     }
   }
 
-  Group {
-    Anchor: (Height: 8);
+  $C.@SecondaryTextButton #CustomRoleApply {
+    @Anchor = (Height: 32);
+    Text: "APPLY CUSTOM ROLE";
   }
-
-  Button #CustomRoleApply {
-    Anchor: (Height: 36, Left: 0, Right: 0);
-    Style: ButtonStyle(
-      Default: (Background: (Color: #1e2938)),
-      Hovered: (Background: (Color: #253246)),
-      Pressed: (Background: (Color: #1a2433))
-    );
-
-    Label {
-      Text: "Apply";
-      Style: (
-        FontSize: 12,
-        TextColor: #d4dfe8,
-        HorizontalAlignment: Center,
-        VerticalAlignment: Center,
-        RenderBold: true
-      );
-    }
-  }
-
 }
+

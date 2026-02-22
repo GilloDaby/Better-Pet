@@ -19,17 +19,23 @@ import com.hypixel.hytale.server.core.universe.world.World;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 
 import java.util.Locale;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 
 public final class PetBonusPickupSystem extends EntityEventSystem<EntityStore, InteractivelyPickupItemEvent> {
     private final BetterPetsService service;
-    private final PetEffectsConfig effects;
+    private static final List<String> CROP_TOKENS = List.of(
+        "aubergine", "berry", "carrot", "cauliflower", "chilli", "corn", "cotton",
+        "health1", "health2", "health3", "lettuce", "mana1", "mana2", "mana3",
+        "mushroom", "onion", "potato", "potato_sweet", "pumpkin", "rice",
+        "stamina1", "stamina2", "stamina3", "tomato", "turnip", "wheat",
+        "coconut", "mango", "pinkberry", "spiral", "windwillow", "melon", "beetroot"
+    );
 
-    public PetBonusPickupSystem(BetterPetsService service, PetEffectsConfig effects) {
+    public PetBonusPickupSystem(BetterPetsService service) {
         super(InteractivelyPickupItemEvent.class);
         this.service = service;
-        this.effects = effects;
     }
 
     @Override
@@ -72,7 +78,12 @@ public final class PetBonusPickupSystem extends EntityEventSystem<EntityStore, I
             return;
         }
 
-        double bonusPercent = resolveBonusPercent(playerUuid, itemId);
+        BranchResolution resolution = resolveBonus(playerUuid, itemId);
+        if (resolution.branch == PetSkillBranch.FARMING) {
+            service.addFarmingActivityXp(playerUuid, 1);
+        }
+
+        double bonusPercent = resolution.bonusPercent;
         if (bonusPercent <= 0.0) {
             return;
         }
@@ -92,38 +103,43 @@ public final class PetBonusPickupSystem extends EntityEventSystem<EntityStore, I
         if (transaction == null || !transaction.succeeded()) {
             return;
         }
+
     }
 
-    private double resolveBonusPercent(UUID playerUuid, String itemId) {
+    private BranchResolution resolveBonus(UUID playerUuid, String itemId) {
         String lowered = itemId.toLowerCase(Locale.ROOT);
         boolean crop = isCropItem(lowered);
         boolean fish = isFishItem(lowered);
         boolean mobDrop = isMobDropItem(lowered);
         if (!crop && !fish && !mobDrop) {
-            return 0.0;
-        }
-
-        String activePet = service.getActivePetId(playerUuid);
-        if (activePet == null || activePet.isBlank()) {
-            return 0.0;
+            return BranchResolution.none();
         }
 
         if (crop) {
-            return effects.getCropsBonusPercent(activePet);
+            return new BranchResolution(PetSkillBranch.FARMING, service.getActiveFarmingBonusPercent(playerUuid));
         }
         if (fish) {
-            return effects.getFishingBonusPercent(activePet);
+            return new BranchResolution(PetSkillBranch.FISHING, service.getActiveFishingBonusPercent(playerUuid));
         }
-        return effects.getMobDropBonusPercent(activePet);
+        return new BranchResolution(PetSkillBranch.MOB_DROPS, service.getActiveMobDropBonusPercent(playerUuid));
     }
 
     private boolean isCropItem(String lowered) {
-        return lowered.contains("plant_crop")
+        if (lowered.contains("plant_crop")
             || lowered.contains("crop_")
             || lowered.contains("plant_fruit")
             || lowered.contains("fruit_")
             || lowered.contains("plant_seed")
-            || lowered.contains("seed_");
+            || lowered.contains("seed_")) {
+            return true;
+        }
+
+        for (String token : CROP_TOKENS) {
+            if (containsToken(lowered, token)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private boolean isFishItem(String lowered) {
@@ -158,8 +174,60 @@ public final class PetBonusPickupSystem extends EntityEventSystem<EntityStore, I
         return extra;
     }
 
+    private boolean containsToken(String value, String token) {
+        if (value == null || value.isBlank() || token == null || token.isBlank()) {
+            return false;
+        }
+        String normalizedValue = normalizeToken(value);
+        String normalizedToken = normalizeToken(token);
+        if (normalizedValue.isBlank() || normalizedToken.isBlank()) {
+            return false;
+        }
+        if (normalizedValue.equals(normalizedToken)) {
+            return true;
+        }
+        String wrapped = "_" + normalizedValue + "_";
+        return wrapped.contains("_" + normalizedToken + "_");
+    }
+
+    private String normalizeToken(String raw) {
+        if (raw == null) {
+            return "";
+        }
+        String lowered = raw.trim().toLowerCase(Locale.ROOT);
+        StringBuilder out = new StringBuilder(lowered.length());
+        boolean lastUnderscore = false;
+        for (int i = 0; i < lowered.length(); i++) {
+            char c = lowered.charAt(i);
+            if ((c >= 'a' && c <= 'z') || (c >= '0' && c <= '9')) {
+                out.append(c);
+                lastUnderscore = false;
+            } else if (!lastUnderscore) {
+                out.append('_');
+                lastUnderscore = true;
+            }
+        }
+        String value = out.toString();
+        while (value.startsWith("_")) {
+            value = value.substring(1);
+        }
+        while (value.endsWith("_")) {
+            value = value.substring(0, value.length() - 1);
+        }
+        while (value.contains("__")) {
+            value = value.replace("__", "_");
+        }
+        return value;
+    }
+
     @Override
     public Query<EntityStore> getQuery() {
         return Archetype.of((ComponentType) PlayerRef.getComponentType());
+    }
+
+    private record BranchResolution(PetSkillBranch branch, double bonusPercent) {
+        private static BranchResolution none() {
+            return new BranchResolution(null, 0.0);
+        }
     }
 }

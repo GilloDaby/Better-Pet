@@ -23,18 +23,17 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
+import java.util.UUID;
 
 final class PetMenuPage extends InteractiveCustomUIPage<PetMenuPage.PetMenuEventData> {
 
     private final BetterPetsService service;
-    private final PetEffectsConfig effects;
     private final List<String> pets;
     private String currentSearchQuery;
 
-    PetMenuPage(PlayerRef playerRef, BetterPetsService service, PetEffectsConfig effects, List<String> pets) {
+    PetMenuPage(PlayerRef playerRef, BetterPetsService service, List<String> pets) {
         super(playerRef, CustomPageLifetime.CanDismiss, PetMenuEventData.CODEC);
         this.service = service;
-        this.effects = effects;
         List<String> resolved = new ArrayList<>();
         if (pets != null) {
             resolved.addAll(pets);
@@ -104,6 +103,9 @@ final class PetMenuPage extends InteractiveCustomUIPage<PetMenuPage.PetMenuEvent
             return;
         }
         if (data.petId == null || !"Spawn".equals(data.action)) {
+            if (data.petId != null && "Manage".equals(data.action)) {
+                openUpgradePage(ref, store, data.petId);
+            }
             return;
         }
         Player player = store.getComponent(ref, Player.getComponentType());
@@ -185,7 +187,7 @@ final class PetMenuPage extends InteractiveCustomUIPage<PetMenuPage.PetMenuEvent
             cmd.append(columnId, "Pages/BetterPetsEntry.ui");
             String selector = columnId + "[" + slot + "]";
             cmd.set(selector + " #PetName.Text", petId);
-            cmd.set(selector + " #PetCommand.Text", "/pet spawn " + petId);
+            cmd.set(selector + " #PetCommand.Text", buildProgressText(petId));
             cmd.set(selector + " #PetEffects.Text", buildEffectsText(petId));
 
             boolean isActive = activePet != null && activePet.equalsIgnoreCase(petId);
@@ -205,8 +207,22 @@ final class PetMenuPage extends InteractiveCustomUIPage<PetMenuPage.PetMenuEvent
                 selector + " #SpawnButton",
                 EventData.of("Action", "Spawn").append("PetId", petId)
             );
+            events.addEventBinding(
+                CustomUIEventBindingType.Activating,
+                selector + " #UpgradeButton",
+                EventData.of("Action", "Manage").append("PetId", petId),
+                false
+            );
             index++;
         }
+    }
+
+    private void openUpgradePage(Ref<EntityStore> ref, Store<EntityStore> store, String petId) {
+        Player player = store.getComponent(ref, Player.getComponentType());
+        if (player == null || player.getPageManager() == null) {
+            return;
+        }
+        player.getPageManager().openCustomPage(ref, store, new PetUpgradePage(playerRef, service, petId));
     }
 
     private void applyPetCardStyle(UICommandBuilder cmd, String selector, boolean active) {
@@ -262,23 +278,24 @@ final class PetMenuPage extends InteractiveCustomUIPage<PetMenuPage.PetMenuEvent
     }
 
     private String buildEffectsText(String petId) {
-        if (effects == null || petId == null || petId.isBlank()) {
+        if (petId == null || petId.isBlank()) {
             return "No bonus";
         }
+        UUID ownerUuid = playerRef.getUuid();
         List<String> parts = new ArrayList<>();
-        double mob = effects.getMobDropBonusPercent(petId);
+        double mob = service.getPetMobDropBonusPercent(ownerUuid, petId);
         if (mob > 0.0) {
             parts.add("Mob +" + formatPercent(mob) + "%");
         }
-        double money = effects.getMoneyBonusPercent(petId);
+        double money = service.getPetMoneyBonusPercent(ownerUuid, petId);
         if (money > 0.0) {
             parts.add("Money +" + formatPercent(money) + "%");
         }
-        double crops = effects.getCropsBonusPercent(petId);
+        double crops = service.getPetFarmingBonusPercent(ownerUuid, petId);
         if (crops > 0.0) {
             parts.add("Crops +" + formatPercent(crops) + "%");
         }
-        double fishing = effects.getFishingBonusPercent(petId);
+        double fishing = service.getPetFishingBonusPercent(ownerUuid, petId);
         if (fishing > 0.0) {
             parts.add("Fishing +" + formatPercent(fishing) + "%");
         }
@@ -286,6 +303,15 @@ final class PetMenuPage extends InteractiveCustomUIPage<PetMenuPage.PetMenuEvent
             return "No bonus";
         }
         return String.join(" | ", parts);
+    }
+
+    private String buildProgressText(String petId) {
+        UUID ownerUuid = playerRef.getUuid();
+        PetProgressSnapshot progress = service.getPetProgress(ownerUuid, petId);
+        if (progress == null) {
+            return "/pet spawn " + petId;
+        }
+        return "Lvl " + progress.level + " | P" + progress.prestige + " | Points " + progress.unspentPoints;
     }
 
     private String formatPercent(double value) {
