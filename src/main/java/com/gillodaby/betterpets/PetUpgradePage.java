@@ -163,7 +163,11 @@ final class PetUpgradePage extends InteractiveCustomUIPage<PetUpgradePage.PetUpg
         }
         visiblePets = new ArrayList<>(visiblePets);
         visiblePets.sort(Comparator.naturalOrder());
+        if (selectedPetId == null || selectedPetId.isBlank()) {
+            selectedPetId = normalizePetId(service.getActivePetId(playerUuid));
+        }
         ensureSelectedPet(visiblePets);
+        moveSelectedPetToFront(visiblePets);
         if (selectedPetId == null) {
             close();
             return;
@@ -331,6 +335,22 @@ final class PetUpgradePage extends InteractiveCustomUIPage<PetUpgradePage.PetUpg
             }
         }
         selectedPetId = normalizePetId(ownedPets.get(0));
+    }
+
+    private void moveSelectedPetToFront(List<String> pets) {
+        if (pets == null || pets.size() <= 1 || selectedPetId == null || selectedPetId.isBlank()) {
+            return;
+        }
+        for (int i = 0; i < pets.size(); i++) {
+            String pet = pets.get(i);
+            if (pet != null && pet.equalsIgnoreCase(selectedPetId)) {
+                if (i > 0) {
+                    pets.remove(i);
+                    pets.add(0, pet);
+                }
+                return;
+            }
+        }
     }
 
     private String normalizePetId(String petId) {

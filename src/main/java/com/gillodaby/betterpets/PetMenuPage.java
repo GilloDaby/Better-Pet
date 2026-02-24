@@ -66,7 +66,14 @@ final class PetMenuPage extends InteractiveCustomUIPage<PetMenuPage.PetMenuEvent
             EventData.of("AutoRespawnToggle", "toggle"),
             false
         );
+        events.addEventBinding(
+            CustomUIEventBindingType.ValueChanged,
+            "#HidePetVisualToggle #CheckBox",
+            EventData.of("HidePetVisualToggle", "toggle"),
+            false
+        );
         cmd.set("#AutoRespawnToggle #CheckBox.Value", service.isAutoRespawn(playerRef.getUuid()));
+        cmd.set("#HidePetVisualToggle #CheckBox.Value", service.isHideActivePetVisual(playerRef.getUuid()));
         buildPetList(cmd, events, player);
     }
 
@@ -96,8 +103,51 @@ final class PetMenuPage extends InteractiveCustomUIPage<PetMenuPage.PetMenuEvent
                 EventData.of("AutoRespawnToggle", "toggle"),
                 false
             );
+            events.addEventBinding(
+                CustomUIEventBindingType.ValueChanged,
+                "#HidePetVisualToggle #CheckBox",
+                EventData.of("HidePetVisualToggle", "toggle"),
+                false
+            );
             cmd.set("#AutoRespawnToggle #CheckBox.Value", !current);
+            cmd.set("#HidePetVisualToggle #CheckBox.Value", service.isHideActivePetVisual(playerRef.getUuid()));
             Player player = store.getComponent(ref, Player.getComponentType());
+            buildPetList(cmd, events, player);
+            sendUpdate(cmd, events, false);
+            return;
+        }
+        if (data.hidePetVisualToggle != null) {
+            boolean current = service.isHideActivePetVisual(playerRef.getUuid());
+            boolean next = !current;
+            Player player = store.getComponent(ref, Player.getComponentType());
+            World world = player == null ? null : player.getWorld();
+            if (world != null) {
+                world.execute(() -> service.setHideActivePetVisual(playerRef, world, next));
+            } else {
+                service.setHideActivePetVisual(playerRef.getUuid(), next);
+            }
+            UICommandBuilder cmd = new UICommandBuilder();
+            UIEventBuilder events = new UIEventBuilder();
+            events.addEventBinding(
+                CustomUIEventBindingType.ValueChanged,
+                "#SearchInput",
+                EventData.of("@SearchQuery", "#SearchInput.Value"),
+                false
+            );
+            events.addEventBinding(
+                CustomUIEventBindingType.ValueChanged,
+                "#AutoRespawnToggle #CheckBox",
+                EventData.of("AutoRespawnToggle", "toggle"),
+                false
+            );
+            events.addEventBinding(
+                CustomUIEventBindingType.ValueChanged,
+                "#HidePetVisualToggle #CheckBox",
+                EventData.of("HidePetVisualToggle", "toggle"),
+                false
+            );
+            cmd.set("#AutoRespawnToggle #CheckBox.Value", service.isAutoRespawn(playerRef.getUuid()));
+            cmd.set("#HidePetVisualToggle #CheckBox.Value", next);
             buildPetList(cmd, events, player);
             sendUpdate(cmd, events, false);
             return;
@@ -124,6 +174,26 @@ final class PetMenuPage extends InteractiveCustomUIPage<PetMenuPage.PetMenuEvent
             service.togglePetOnWorld(playerRef, world, data.petId);
             UICommandBuilder cmd = new UICommandBuilder();
             UIEventBuilder events = new UIEventBuilder();
+            events.addEventBinding(
+                CustomUIEventBindingType.ValueChanged,
+                "#SearchInput",
+                EventData.of("@SearchQuery", "#SearchInput.Value"),
+                false
+            );
+            events.addEventBinding(
+                CustomUIEventBindingType.ValueChanged,
+                "#AutoRespawnToggle #CheckBox",
+                EventData.of("AutoRespawnToggle", "toggle"),
+                false
+            );
+            events.addEventBinding(
+                CustomUIEventBindingType.ValueChanged,
+                "#HidePetVisualToggle #CheckBox",
+                EventData.of("HidePetVisualToggle", "toggle"),
+                false
+            );
+            cmd.set("#AutoRespawnToggle #CheckBox.Value", service.isAutoRespawn(playerRef.getUuid()));
+            cmd.set("#HidePetVisualToggle #CheckBox.Value", service.isHideActivePetVisual(playerRef.getUuid()));
             buildPetList(cmd, events, player);
             sendUpdate(cmd, events, false);
         });
@@ -145,7 +215,14 @@ final class PetMenuPage extends InteractiveCustomUIPage<PetMenuPage.PetMenuEvent
             EventData.of("AutoRespawnToggle", "toggle"),
             false
         );
+        events.addEventBinding(
+            CustomUIEventBindingType.ValueChanged,
+            "#HidePetVisualToggle #CheckBox",
+            EventData.of("HidePetVisualToggle", "toggle"),
+            false
+        );
         cmd.set("#AutoRespawnToggle #CheckBox.Value", service.isAutoRespawn(playerRef.getUuid()));
+        cmd.set("#HidePetVisualToggle #CheckBox.Value", service.isHideActivePetVisual(playerRef.getUuid()));
         Player player = store.getComponent(ref, Player.getComponentType());
         buildPetList(cmd, events, player);
         sendUpdate(cmd, events, false);
@@ -349,6 +426,9 @@ final class PetMenuPage extends InteractiveCustomUIPage<PetMenuPage.PetMenuEvent
             .append(new KeyedCodec<>("AutoRespawnToggle", Codec.STRING),
                 (data, value) -> data.autoRespawnToggle = value,
                 data -> data.autoRespawnToggle).add()
+            .append(new KeyedCodec<>("HidePetVisualToggle", Codec.STRING),
+                (data, value) -> data.hidePetVisualToggle = value,
+                data -> data.hidePetVisualToggle).add()
             .append(new KeyedCodec<>("@SearchQuery", Codec.STRING),
                 (data, value) -> data.searchQuery = value,
                 data -> data.searchQuery).add()
@@ -357,6 +437,7 @@ final class PetMenuPage extends InteractiveCustomUIPage<PetMenuPage.PetMenuEvent
         public String petId;
         public String action;
         public String autoRespawnToggle;
+        public String hidePetVisualToggle;
         public String searchQuery;
 
         public PetMenuEventData() {

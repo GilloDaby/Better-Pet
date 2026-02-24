@@ -260,7 +260,7 @@ final class BetterPetsService {
         if (modelId == null || modelId.isBlank() || roleId == null || roleId.isBlank()) {
             return;
         }
-        world.execute(() -> spawnPetInternal(ref, world, lastPet.toLowerCase(Locale.ROOT), modelId, roleId));
+        world.execute(() -> activatePetInternal(ref, world, lastPet.toLowerCase(Locale.ROOT), modelId, roleId));
     }
 
     boolean givePet(PlayerRef target, String petId) {
@@ -377,6 +377,64 @@ final class BetterPetsService {
 
     void setAutoRespawn(UUID ownerUuid, boolean enabled) {
         settingsRepository.setAutoRespawn(ownerUuid, enabled);
+    }
+
+    boolean isHideActivePetVisual(UUID ownerUuid) {
+        return settingsRepository.isHideActivePetVisual(ownerUuid);
+    }
+
+    void setHideActivePetVisual(UUID ownerUuid, boolean enabled) {
+        settingsRepository.setHideActivePetVisual(ownerUuid, enabled);
+    }
+
+    void setHideActivePetVisual(PlayerRef owner, World world, boolean enabled) {
+        if (owner == null || owner.getUuid() == null) {
+            return;
+        }
+        UUID ownerUuid = owner.getUuid();
+        settingsRepository.setHideActivePetVisual(ownerUuid, enabled);
+
+        PetState current = activePets.get(ownerUuid);
+        if (current == null) {
+            return;
+        }
+        if (enabled) {
+            if (current.hiddenVisual) {
+                return;
+            }
+            World currentWorld = world != null ? world : resolveWorld(current.worldName);
+            if (currentWorld != null) {
+                despawnPet(currentWorld, current);
+            }
+            activePets.put(ownerUuid, current.toHidden());
+            return;
+        }
+
+        if (!current.hiddenVisual) {
+            return;
+        }
+        World targetWorld = world != null ? world : resolveWorld(current.worldName);
+        if (targetWorld == null || !config.isWorldAllowed(targetWorld.getName())) {
+            return;
+        }
+        Player player = resolvePlayer(targetWorld, ownerUuid);
+        if (player == null) {
+            return;
+        }
+        PlayerRef playerRef = player.getPlayerRef();
+        if (playerRef == null || playerRef.getUuid() == null) {
+            return;
+        }
+        String modelId = current.modelId == null || current.modelId.isBlank()
+            ? resolveModelIdForPet(current.type)
+            : current.modelId;
+        String roleId = current.roleId == null || current.roleId.isBlank()
+            ? resolveRoleIdForPet(current.type)
+            : current.roleId;
+        if (modelId == null || modelId.isBlank() || roleId == null || roleId.isBlank()) {
+            return;
+        }
+        spawnPetInternal(playerRef, targetWorld, current.type, modelId, roleId);
     }
 
     void setPetName(PlayerRef owner, World world, String name) {
@@ -593,7 +651,7 @@ final class BetterPetsService {
         settingsRepository.setLastPet(owner.getUuid(), key);
         final String finalModelId = modelId;
         final String finalRoleId = roleId;
-        world.execute(() -> spawnPetInternal(owner, world, key, finalModelId, finalRoleId));
+        world.execute(() -> activatePetInternal(owner, world, key, finalModelId, finalRoleId));
         return true;
     }
 
@@ -636,7 +694,7 @@ final class BetterPetsService {
             return false;
         }
         settingsRepository.setLastPet(owner.getUuid(), key);
-        spawnPetInternal(owner, world, key, modelId, roleId);
+        activatePetInternal(owner, world, key, modelId, roleId);
         return true;
     }
 
@@ -842,8 +900,42 @@ final class BetterPetsService {
                 currentWorld.execute(() -> despawnPet(currentWorld, state));
                 continue;
             }
+            if (state.hiddenVisual) {
+                continue;
+            }
             world.execute(() -> followPet(world, state));
         }
+    }
+
+    private void activatePetInternal(PlayerRef owner, World world, String type, String modelId, String roleId) {
+        if (owner == null || owner.getUuid() == null || world == null) {
+            return;
+        }
+        if (settingsRepository.isHideActivePetVisual(owner.getUuid())) {
+            activateHiddenPetInternal(owner, world, type, modelId, roleId);
+            return;
+        }
+        spawnPetInternal(owner, world, type, modelId, roleId);
+    }
+
+    private void activateHiddenPetInternal(PlayerRef owner, World world, String type, String modelId, String roleId) {
+        if (owner == null || owner.getUuid() == null || world == null) {
+            return;
+        }
+        removeExisting(owner.getUuid(), world);
+        PetState state = new PetState(
+            type,
+            modelId,
+            roleId,
+            world.getName(),
+            owner.getUuid(),
+            null,
+            null,
+            config.followDistance(),
+            config.followStep(),
+            true
+        );
+        activePets.put(owner.getUuid(), state);
     }
 
     private void spawnPetInternal(PlayerRef owner, World world, String type, String modelId, String roleId) {
@@ -882,7 +974,18 @@ final class BetterPetsService {
             }
         }
 
-        PetState state = new PetState(type, modelId, world.getName(), owner.getUuid(), pet.getUuid(), petRef, config.followDistance(), config.followStep());
+        PetState state = new PetState(
+            type,
+            modelId,
+            roleId,
+            world.getName(),
+            owner.getUuid(),
+            pet.getUuid(),
+            petRef,
+            config.followDistance(),
+            config.followStep(),
+            false
+        );
         activePets.put(owner.getUuid(), state);
         String petName = nameRepository.getName(owner.getUuid());
         if (petName != null && !petName.isBlank()) {
@@ -892,6 +995,9 @@ final class BetterPetsService {
 
     private void followPet(World world, PetState state) {
         if (world == null || state == null) {
+            return;
+        }
+        if (state.hiddenVisual) {
             return;
         }
         Ref<EntityStore> petRef = resolvePetRef(world, state);
@@ -955,6 +1061,9 @@ final class BetterPetsService {
         if (world == null || state == null) {
             return;
         }
+        if (state.hiddenVisual) {
+            return;
+        }
         Ref<EntityStore> petRef = resolvePetRef(world, state);
         if (petRef == null || !petRef.isValid()) {
             return;
@@ -997,7 +1106,13 @@ final class BetterPetsService {
         if (world == null || state == null) {
             return null;
         }
+        if (state.hiddenVisual) {
+            return null;
+        }
         if (state.petRef != null && state.petRef.isValid()) {
+            return state.petRef;
+        }
+        if (state.petUuid == null) {
             return state.petRef;
         }
         Ref<EntityStore> ref = world.getEntityRef(state.petUuid);
@@ -1067,7 +1182,7 @@ final class BetterPetsService {
         if (modelId == null || modelId.isBlank() || roleId == null || roleId.isBlank()) {
             return false;
         }
-        spawnPetInternal(ref, world, lastPet.toLowerCase(Locale.ROOT), modelId, roleId);
+        activatePetInternal(ref, world, lastPet.toLowerCase(Locale.ROOT), modelId, roleId);
         return true;
     }
 
@@ -1282,22 +1397,50 @@ final class BetterPetsService {
     private static final class PetState {
         final String type;
         final String modelId;
+        final String roleId;
         final String worldName;
         final UUID ownerUuid;
         final UUID petUuid;
         Ref<EntityStore> petRef;
         final double followDistance;
         final double followStep;
+        final boolean hiddenVisual;
 
-        PetState(String type, String modelId, String worldName, UUID ownerUuid, UUID petUuid, Ref<EntityStore> petRef, double followDistance, double followStep) {
+        PetState(String type,
+                 String modelId,
+                 String roleId,
+                 String worldName,
+                 UUID ownerUuid,
+                 UUID petUuid,
+                 Ref<EntityStore> petRef,
+                 double followDistance,
+                 double followStep,
+                 boolean hiddenVisual) {
             this.type = type;
             this.modelId = modelId;
+            this.roleId = roleId;
             this.worldName = worldName;
             this.ownerUuid = ownerUuid;
             this.petUuid = petUuid;
             this.petRef = petRef;
             this.followDistance = followDistance;
             this.followStep = followStep;
+            this.hiddenVisual = hiddenVisual;
+        }
+
+        PetState toHidden() {
+            return new PetState(
+                type,
+                modelId,
+                roleId,
+                worldName,
+                ownerUuid,
+                null,
+                null,
+                followDistance,
+                followStep,
+                true
+            );
         }
     }
 }

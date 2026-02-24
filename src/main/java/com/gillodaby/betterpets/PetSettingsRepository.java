@@ -58,7 +58,8 @@ final class PetSettingsRepository {
             String[] parts = data.split(";", -1);
             boolean auto = parts.length > 0 && "true".equalsIgnoreCase(parts[0].trim());
             String last = parts.length > 1 ? parts[1].trim() : "";
-            settings.put(uuid, new PetSettings(auto, last));
+            boolean hideVisual = parts.length > 2 && "true".equalsIgnoreCase(parts[2].trim());
+            settings.put(uuid, new PetSettings(auto, last, hideVisual));
         }
     }
 
@@ -81,7 +82,7 @@ final class PetSettingsRepository {
                     continue;
                 }
                 String last = data.lastPet == null ? "" : data.lastPet;
-                lines.add(key + "=" + data.autoRespawn + ";" + last);
+                lines.add(key + "=" + data.autoRespawn + ";" + last + ";" + data.hideActivePetVisual);
             }
             Files.write(tempFile, lines, StandardCharsets.UTF_8);
             try {
@@ -105,7 +106,7 @@ final class PetSettingsRepository {
         if (uuid == null) {
             return;
         }
-        PetSettings data = settings.computeIfAbsent(uuid, ignored -> new PetSettings(false, ""));
+        PetSettings data = settings.computeIfAbsent(uuid, ignored -> new PetSettings(false, "", false));
         data.autoRespawn = enabled;
         save();
     }
@@ -125,18 +126,37 @@ final class PetSettingsRepository {
         if (uuid == null) {
             return;
         }
-        PetSettings data = settings.computeIfAbsent(uuid, ignored -> new PetSettings(false, ""));
+        PetSettings data = settings.computeIfAbsent(uuid, ignored -> new PetSettings(false, "", false));
         data.lastPet = petId == null ? "" : petId;
+        save();
+    }
+
+    synchronized boolean isHideActivePetVisual(UUID uuid) {
+        if (uuid == null) {
+            return false;
+        }
+        PetSettings data = settings.get(uuid);
+        return data != null && data.hideActivePetVisual;
+    }
+
+    synchronized void setHideActivePetVisual(UUID uuid, boolean enabled) {
+        if (uuid == null) {
+            return;
+        }
+        PetSettings data = settings.computeIfAbsent(uuid, ignored -> new PetSettings(false, "", false));
+        data.hideActivePetVisual = enabled;
         save();
     }
 
     private static final class PetSettings {
         boolean autoRespawn;
         String lastPet;
+        boolean hideActivePetVisual;
 
-        PetSettings(boolean autoRespawn, String lastPet) {
+        PetSettings(boolean autoRespawn, String lastPet, boolean hideActivePetVisual) {
             this.autoRespawn = autoRespawn;
             this.lastPet = lastPet;
+            this.hideActivePetVisual = hideActivePetVisual;
         }
     }
 }

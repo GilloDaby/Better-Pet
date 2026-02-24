@@ -61,6 +61,12 @@ $C.@PageOverlay #PetsRoot {
         $C.@CheckBoxWithLabel #AutoRespawnToggle {
           @Text = "Auto respawn active pet";
         }
+
+        Group { Anchor: (Width: 18); }
+
+        $C.@CheckBoxWithLabel #HidePetVisualToggle {
+          @Text = "Hide active pet model (buff stays active)";
+        }
       }
 
       Group #PetListContainer {
