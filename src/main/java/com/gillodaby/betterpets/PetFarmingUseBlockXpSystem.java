@@ -13,16 +13,20 @@ import com.hypixel.hytale.server.core.asset.type.blocktype.config.HarvestingDrop
 import com.hypixel.hytale.server.core.entity.InteractionContext;
 import com.hypixel.hytale.server.core.entity.entities.Player;
 import com.hypixel.hytale.server.core.event.events.ecs.UseBlockEvent;
+import com.hypixel.hytale.server.core.inventory.ItemStack;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.world.World;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 final class PetFarmingUseBlockXpSystem extends EntityEventSystem<EntityStore, UseBlockEvent.Pre> {
     private final BetterPetsService service;
+    private final Map<UUID, Double> pendingSickleDurability = new ConcurrentHashMap<>();
     private static final List<String> CROP_TOKENS = List.of(
         "aubergine", "berry", "carrot", "cauliflower", "chilli", "corn", "cotton",
         "health1", "health2", "health3", "lettuce", "mana1", "mana2", "mana3",
@@ -70,9 +74,22 @@ final class PetFarmingUseBlockXpSystem extends EntityEventSystem<EntityStore, Us
             return;
         }
         if (!isOfficialHarvestInteraction(event, blockType)) {
+            pendingSickleDurability.remove(playerUuid);
             return;
         }
 
+        InteractionContext context = event.getContext();
+        if (isSickleContext(context)) {
+            double beforeDurability = getHeldItemDurability(context);
+            if (Double.isFinite(beforeDurability)) {
+                pendingSickleDurability.put(playerUuid, beforeDurability);
+            } else {
+                pendingSickleDurability.remove(playerUuid);
+            }
+            return;
+        }
+
+        pendingSickleDurability.remove(playerUuid);
         service.addFarmingActivityXp(playerUuid, 1);
     }
 
@@ -81,7 +98,37 @@ final class PetFarmingUseBlockXpSystem extends EntityEventSystem<EntityStore, Us
         return (Query<EntityStore>) Archetype.of(PlayerRef.getComponentType());
     }
 
-    private boolean isOfficialHarvestInteraction(UseBlockEvent.Pre event, BlockType blockType) {
+    int consumeSickleHarvestXp(UUID playerUuid, InteractionContext context) {
+        if (playerUuid == null || !isSickleContext(context)) {
+            if (playerUuid != null) {
+                pendingSickleDurability.remove(playerUuid);
+            }
+            return 0;
+        }
+        Double beforeDurability = pendingSickleDurability.remove(playerUuid);
+        if (beforeDurability == null || !Double.isFinite(beforeDurability)) {
+            return 0;
+        }
+        double afterDurability = getHeldItemDurability(context);
+        if (!Double.isFinite(afterDurability)) {
+            return 0;
+        }
+        double durabilitySpent = beforeDurability - afterDurability;
+        if (durabilitySpent <= 0.0) {
+            return 0;
+        }
+        return (int) Math.floor(durabilitySpent + 1.0E-6);
+    }
+
+    boolean isSickleContext(InteractionContext context) {
+        ItemStack heldItem = context == null ? null : context.getHeldItem();
+        if (heldItem == null || heldItem.isEmpty()) {
+            return false;
+        }
+        return containsToken(heldItem.getItemId(), "sickle");
+    }
+
+    boolean isOfficialHarvestInteraction(UseBlockEvent event, BlockType blockType) {
         InteractionType interactionType = event.getInteractionType();
         InteractionContext context = event.getContext();
         if (context != null && interactionType != null) {
@@ -102,6 +149,14 @@ final class PetFarmingUseBlockXpSystem extends EntityEventSystem<EntityStore, Us
             return false;
         }
         return looksLikeHarvestableCrop(blockType);
+    }
+
+    private double getHeldItemDurability(InteractionContext context) {
+        ItemStack heldItem = context == null ? null : context.getHeldItem();
+        if (heldItem == null || heldItem.isEmpty()) {
+            return Double.NaN;
+        }
+        return heldItem.getDurability();
     }
 
     private boolean looksLikeHarvestableCrop(BlockType blockType) {
