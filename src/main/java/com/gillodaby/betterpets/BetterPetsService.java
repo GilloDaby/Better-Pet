@@ -51,6 +51,7 @@ final class BetterPetsService {
     private static final int XP_PER_LEVEL_AFTER_3 = 125;
     private static final long MONEY_XP_COOLDOWN_MS = 10_000L;
     private static final long FARMING_XP_COOLDOWN_MS = 250L;
+    private static final int MAX_FARMING_XP_PER_GRANT = 7;
 
     private final Path dataDir;
     private volatile BetterPetsConfig config;
@@ -829,13 +830,14 @@ final class BetterPetsService {
         if (ownerUuid == null || rawAmount <= 0) {
             return;
         }
+        int clampedAmount = Math.min(rawAmount, MAX_FARMING_XP_PER_GRANT);
         long now = System.currentTimeMillis();
         Long last = farmingActivityCooldown.get(ownerUuid);
         if (last != null && (now - last) < FARMING_XP_COOLDOWN_MS) {
             return;
         }
         farmingActivityCooldown.put(ownerUuid, now);
-        addExperienceToActivePet(ownerUuid, rawAmount, PetSkillBranch.FARMING);
+        addExperienceToActivePet(ownerUuid, clampedAmount, PetSkillBranch.FARMING);
     }
 
     private String normalizePetId(String petId) {

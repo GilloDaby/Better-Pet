@@ -25,6 +25,7 @@ import java.util.concurrent.ThreadLocalRandom;
 
 public final class PetBonusPickupSystem extends EntityEventSystem<EntityStore, InteractivelyPickupItemEvent> {
     private final BetterPetsService service;
+    private static final int MAX_FARMING_XP_PER_PICKUP = 7;
     private static final List<String> CROP_TOKENS = List.of(
         "aubergine", "berry", "carrot", "cauliflower", "chilli", "corn", "cotton",
         "health1", "health2", "health3", "lettuce", "mana1", "mana2", "mana3",
@@ -80,7 +81,9 @@ public final class PetBonusPickupSystem extends EntityEventSystem<EntityStore, I
 
         BranchResolution resolution = resolveBonus(playerUuid, itemId);
         if (resolution.branch == PetSkillBranch.FARMING) {
-            service.addFarmingActivityXp(playerUuid, 1);
+            int quantity = Math.max(1, stack.getQuantity());
+            int xpAmount = Math.min(quantity, MAX_FARMING_XP_PER_PICKUP);
+            service.addFarmingActivityXp(playerUuid, xpAmount);
         }
 
         double bonusPercent = resolution.bonusPercent;
